@@ -110,32 +110,39 @@ def update_status():
         barrel_name = raw_body[0].strip()
         status_line = raw_body[1].strip()
         
-        # Check of de ton al bestaat. Zo niet: create_if_missing geeft de lege v1 configuratie.
-        # We slaan dit direct op zodat de server "baas" is over v1.
+        # 1. Probeer data op te halen. 
+        # Als de naam niet bestaat, wordt een nieuwe v1-configuratie in het geheugen gemaakt.
         server_data = Storage.get_data(barrel_name)
-        if not server_data:
-            server_data = Storage.get_data(barrel_name, create_if_missing=True)
-            Storage.save_data(barrel_name, server_data)
+        is_new = False
         
-        # Parsen van de status regel: t..., v..., b..., w...
+        if not server_data:
+            # Maak nieuwe v1 config aan
+            server_data = Storage.get_data(barrel_name, create_if_missing=True)
+            is_new = True
+            # We slaan het nog niet direct op, dat doen we na het parsen van de ton-status
+        
+        # 2. Parsen van de status regel: t..., v..., b..., w...
         parts = {p.strip()[0]: p.strip()[1:] for p in status_line.split(',')}
         v_parts = parts['v'].split('|')
         ton_v_today = int(v_parts[0])
         ton_v_tomorrow = int(v_parts[1])
 
-        # Update de status (altijd)
+        # 3. Update de status-waarden van de ton in onze server_data
         server_data['last_updated'] = int(time.time())
         server_data['battery'] = int(parts['b'])
         server_data['water_level'] = float(parts['w'])
+        
+        # 4. Sla de data op (creëert het bestand als het een nieuwe ton is)
         Storage.save_data(barrel_name, server_data)
 
-        # Check of versie van ton AFWIJKT van server (niet alleen lager)
+        # 5. Vergelijk versies
+        # Als de ton v0 stuurt en de server v1 heeft (of hoger), wordt dit 'y'
         up_today = "y" if server_data['today_version'] != ton_v_today else "n"
         up_tomorrow = "y" if server_data['tomorrow_version'] != ton_v_tomorrow else "n"
         
         response = f"{up_today}{up_tomorrow}"
 
-        # Stuur data blokken voor elke 'y'
+        # 6. Stuur de nieuwe schema's (v1) mee als de ton op v0 zit
         if up_today == "y":
             v_str = str(server_data['today_version']).zfill(3)
             response += f"{v_str}{server_data['today_schedule']}"
