@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="nl">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,24 +8,60 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
         .water-box {
-            position: relative; width: 80px; height: 150px;
-            border: 2px solid #cbd5e1; border-radius: 8px;
-            overflow: hidden; background-color: #f8fafc; margin: 0 auto;
+            position: relative;
+            width: 80px;
+            height: 150px;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: #f8fafc;
+            margin: 0 auto;
         }
+
         .water-fill {
-            position: absolute; bottom: 0; width: 100%;
-            background-color: #3b82f6; transition: height 0.5s ease;
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background-color: #3b82f6;
+            transition: height 0.5s ease;
         }
+
         .water-line {
-            position: absolute; width: 100%;
-            border-top: 1px dashed #ef4444; z-index: 10;
+            position: absolute;
+            width: 100%;
+            border-top: 1px dashed #ef4444;
+            z-index: 10;
+        }
+
+        .day-card.future .data-overlay {
+            background: rgba(241, 245, 249, 0.8);
+            backdrop-filter: blur(2px);
+        }
+
+        .schedule-muted {
+            opacity: 0.4;
+            filter: grayscale(1);
+            pointer-events: none;
+        }
+
+        .rain-warning {
+            border: 1px solid #fbbf24;
+            background: #fffbeb;
+            color: #92400e;
         }
     </style>
 </head>
+
 <body class="bg-slate-100 font-sans text-slate-800 pb-12">
 
     <div class="bg-white shadow px-6 py-4 flex flex-wrap justify-between items-center sticky top-0 z-20">
@@ -32,26 +69,28 @@
             <h1 class="text-2xl font-bold text-blue-700">{{ barrel_name }}</h1>
             <p class="text-xs text-slate-500">Laatst bijgewerkt: {{ last_updated_mins }} minuten geleden</p>
         </div>
-        
+
         <div class="flex items-center gap-6 mt-4 sm:mt-0">
             <div class="text-center flex flex-col items-center">
                 <span class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Batterij</span>
                 <div class="flex items-center border-2 border-slate-300 rounded-sm p-[2px] gap-[2px] w-12 h-5 relative">
                     <div class="absolute -right-1.5 top-1 h-2 w-1 bg-slate-300 rounded-r-sm"></div>
-                    {% set bat_colors = ['bg-red-500', 'bg-orange-500', 'bg-yellow-400', 'bg-lime-400', 'bg-green-500'] %}
+                    {% set bat_colors = ['bg-red-500', 'bg-orange-500', 'bg-yellow-400', 'bg-lime-400', 'bg-green-500']
+                    %}
                     {% set active_color = bat_colors[data.battery - 1] if data.battery > 0 else 'bg-slate-200' %}
-                    
+
                     {% for i in range(5) %}
-                        <div class="flex-1 h-full rounded-sm {{ active_color if i < data.battery else 'bg-slate-200' }}"></div>
+                    <div class="flex-1 h-full rounded-sm {{ active_color if i < data.battery else 'bg-slate-200' }}">
+                    </div>
                     {% endfor %}
                 </div>
             </div>
-            
+
             <div class="text-center">
                 <span class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Water</span>
                 <span class="text-lg font-bold text-blue-600">{{ data.water_level|round(1) }} L</span>
             </div>
-            
+
             <div class="text-center border-l border-slate-200 pl-6 flex flex-col items-center">
                 <span class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Weer</span>
                 <div class="flex items-center gap-2">
@@ -63,15 +102,18 @@
     </div>
 
     <div class="max-w-7xl mx-auto px-6 mt-6 flex justify-between items-center">
-        <button onclick="openEditor()" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition font-medium text-sm">
+        <button onclick="openEditor()"
+            class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition font-medium text-sm">
             ⚙️ Schema's Bewerken
         </button>
-        
+
         <label class="flex items-center cursor-pointer space-x-3">
             <span class="text-sm font-medium text-slate-700">Annuleer schema's op regendagen</span>
             <div class="relative">
                 <input type="checkbox" class="sr-only peer" {% if data.cancel_rainy %}checked{% endif %}>
-                <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                <div
+                    class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
+                </div>
             </div>
         </label>
     </div>
@@ -80,22 +122,28 @@
         <div class="flex gap-6 overflow-x-auto no-scrollbar px-6 pb-6 snap-x snap-mandatory" id="carousel"></div>
     </div>
 
-    <div id="graph-modal" class="hidden fixed inset-0 bg-slate-900 bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div id="graph-modal"
+        class="hidden fixed inset-0 bg-slate-900 bg-opacity-50 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-3xl p-6 relative">
-            <button onclick="closeGraph()" class="absolute top-4 right-4 text-slate-500 hover:text-slate-800 text-2xl font-bold">&times;</button>
+            <button onclick="closeGraph()"
+                class="absolute top-4 right-4 text-slate-500 hover:text-slate-800 text-2xl font-bold">&times;</button>
             <h2 class="text-xl font-bold mb-4">Historische Data</h2>
             <canvas id="historyChart" height="100"></canvas>
         </div>
     </div>
 
-    <div id="editor-modal" class="hidden fixed inset-0 bg-slate-900 bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div id="editor-modal"
+        class="hidden fixed inset-0 bg-slate-900 bg-opacity-50 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl p-6 relative max-h-[90vh] flex flex-col">
-            <button onclick="closeEditor()" class="absolute top-4 right-4 text-slate-500 hover:text-slate-800 text-2xl font-bold">&times;</button>
+            <button onclick="closeEditor()"
+                class="absolute top-4 right-4 text-slate-500 hover:text-slate-800 text-2xl font-bold">&times;</button>
             <h2 class="text-xl font-bold mb-4 text-blue-700">Schema's Bewerken</h2>
-            
+
             <div class="flex gap-4 mb-4 border-b">
-                <button id="tab-today" onclick="switchTab('today')" class="pb-2 font-bold text-blue-600 border-b-2 border-blue-600">Vandaag</button>
-                <button id="tab-tomorrow" onclick="switchTab('tomorrow')" class="pb-2 font-bold text-slate-500">Morgen</button>
+                <button id="tab-today" onclick="switchTab('today')"
+                    class="pb-2 font-bold text-blue-600 border-b-2 border-blue-600">Vandaag</button>
+                <button id="tab-tomorrow" onclick="switchTab('tomorrow')"
+                    class="pb-2 font-bold text-slate-500">Morgen</button>
             </div>
 
             <div class="overflow-y-auto flex-grow pr-2" id="schedule-container">
@@ -104,11 +152,15 @@
                     <div class="flex items-center justify-between bg-slate-50 p-2 rounded border">
                         <span class="font-mono font-bold text-slate-700">{{ timeslots[i] }}</span>
                         <select class="schedule-select-today border rounded p-1 bg-white text-sm" data-index="{{ i }}">
-                            <option value="-" {% if data.today_schedule[i] == '-' %}selected{% endif %}>Uit</option>
-                            <option value="1" {% if data.today_schedule[i] == '1' %}selected{% endif %}>Sip (5s AAN / 5m UIT)</option>
-                            <option value="2" {% if data.today_schedule[i] == '2' %}selected{% endif %}>Rustig (10s AAN / 2m UIT)</option>
-                            <option value="3" {% if data.today_schedule[i] == '3' %}selected{% endif %}>Zwaar (20s AAN / 1m UIT)</option>
-                            <option value="f" {% if data.today_schedule[i] == 'f' %}selected{% endif %}>Vloed (Altijd AAN)</option>
+                            <option value="-" {% if data.today_schedule[i]=='-' %}selected{% endif %}>Uit</option>
+                            <option value="1" {% if data.today_schedule[i]=='1' %}selected{% endif %}>Sip (5s AAN / 5m
+                                UIT)</option>
+                            <option value="2" {% if data.today_schedule[i]=='2' %}selected{% endif %}>Rustig (10s AAN /
+                                2m UIT)</option>
+                            <option value="3" {% if data.today_schedule[i]=='3' %}selected{% endif %}>Zwaar (20s AAN /
+                                1m UIT)</option>
+                            <option value="f" {% if data.today_schedule[i]=='f' %}selected{% endif %}>Vloed (Altijd AAN)
+                            </option>
                         </select>
                     </div>
                     {% endfor %}
@@ -117,12 +169,17 @@
                     {% for i in range(48) %}
                     <div class="flex items-center justify-between bg-slate-50 p-2 rounded border">
                         <span class="font-mono font-bold text-slate-700">{{ timeslots[i] }}</span>
-                        <select class="schedule-select-tomorrow border rounded p-1 bg-white text-sm" data-index="{{ i }}">
-                            <option value="-" {% if data.tomorrow_schedule[i] == '-' %}selected{% endif %}>Uit</option>
-                            <option value="1" {% if data.tomorrow_schedule[i] == '1' %}selected{% endif %}>Sip (5s AAN / 5m UIT)</option>
-                            <option value="2" {% if data.tomorrow_schedule[i] == '2' %}selected{% endif %}>Rustig (10s AAN / 2m UIT)</option>
-                            <option value="3" {% if data.tomorrow_schedule[i] == '3' %}selected{% endif %}>Zwaar (20s AAN / 1m UIT)</option>
-                            <option value="f" {% if data.tomorrow_schedule[i] == 'f' %}selected{% endif %}>Vloed (Altijd AAN)</option>
+                        <select class="schedule-select-tomorrow border rounded p-1 bg-white text-sm"
+                            data-index="{{ i }}">
+                            <option value="-" {% if data.tomorrow_schedule[i]=='-' %}selected{% endif %}>Uit</option>
+                            <option value="1" {% if data.tomorrow_schedule[i]=='1' %}selected{% endif %}>Sip (5s AAN /
+                                5m UIT)</option>
+                            <option value="2" {% if data.tomorrow_schedule[i]=='2' %}selected{% endif %}>Rustig (10s AAN
+                                / 2m UIT)</option>
+                            <option value="3" {% if data.tomorrow_schedule[i]=='3' %}selected{% endif %}>Zwaar (20s AAN
+                                / 1m UIT)</option>
+                            <option value="f" {% if data.tomorrow_schedule[i]=='f' %}selected{% endif %}>Vloed (Altijd
+                                AAN)</option>
                         </select>
                     </div>
                     {% endfor %}
@@ -130,176 +187,133 @@
             </div>
 
             <div class="pt-4 mt-4 border-t flex justify-end gap-3">
-                <button onclick="closeEditor()" class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded">Annuleren</button>
-                <button onclick="saveSchedule()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-bold">Opslaan</button>
+                <button onclick="closeEditor()"
+                    class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded">Annuleren</button>
+                <button onclick="saveSchedule()"
+                    class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-bold">Opslaan</button>
             </div>
         </div>
     </div>
 
     <script>
-        // --- WEER DATA OPHALEN ---
-        fetch('https://api.open-meteo.com/v1/forecast?latitude=50.93&longitude=5.42&current_weather=true')
+        // --- WEER DATA OPHALEN (Inclusief voorspelling) ---
+        let dailyWeather = {}; // Slaat voorspelling per datum op
+
+        fetch('https://api.open-meteo.com/v1/forecast?latitude=50.93&longitude=5.42&daily=weathercode,temperature_2m_max&current_weather=true&timezone=auto')
             .then(res => res.json())
-            .then(data => {
-                const temp = data.current_weather.temperature;
-                const code = data.current_weather.weathercode;
+            .then(weatherData => {
+                const temp = weatherData.current_weather.temperature;
                 document.getElementById('weather-temp').innerText = `${temp}°C`;
-                
-                // WMO Weather interpretation codes
-                let icon = '☀️'; // Default clear
-                if (code >= 1 && code <= 3) icon = '🌤️'; // Partly cloudy
-                if (code >= 45 && code <= 48) icon = '🌫️'; // Fog
-                if (code >= 51 && code <= 67) icon = '🌧️'; // Rain / Drizzle
-                if (code >= 71 && code <= 77) icon = '❄️'; // Snow
-                if (code >= 80 && code <= 82) icon = '🌦️'; // Rain showers
-                if (code >= 95) icon = '⛈️'; // Thunderstorm
-                
-                document.getElementById('weather-icon').innerText = icon;
-            })
-            .catch(err => document.getElementById('weather-temp').innerText = 'N/A');
 
-        // --- CARROUSEL RENDERER ---
-        const days = ['Zondag', 'Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag'];
-        const carousel = document.getElementById('carousel');
-        const maxLiters = {{ data.max_liters }};
-        const currentWaterLiters = {{ data.water_level }};
+                // Verwerk dagelijkse voorspelling voor de carrousel
+                weatherData.daily.time.forEach((dateStr, index) => {
+                    dailyWeather[dateStr] = {
+                        code: weatherData.daily.weathercode[index],
+                        isRainy: weatherData.daily.weathercode[index] >= 51 // 51+ is regen/motregen
+                    };
+                });
 
-        for (let i = 0; i < 7; i++) {
-            let dateOffset = i - 3; 
-            let date = new Date();
-            date.setDate(date.getDate() + dateOffset);
-            let dayName = dateOffset === 0 ? "Vandaag" : days[date.getDay()];
-            
-            let mockLiters = dateOffset === 0 ? currentWaterLiters : Math.max(0, Math.min(maxLiters, Math.floor(Math.random() * maxLiters)));
-            let percentFill = (mockLiters / maxLiters) * 100;
-            
-            let mockHighLine = Math.min(100, percentFill + 15);
-            let mockLowLine = Math.max(0, percentFill - 10);
-            
+                renderCarousel(); // Render de carrousel pas als het weer bekend is
+            });
+
+        function renderCarousel() {
+            const days = ['Zondag', 'Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag'];
+            const carousel = document.getElementById('carousel');
+            const cancelOnRain = document.querySelector('input[type="checkbox"]').checked;
+
+            carousel.innerHTML = ''; // Maak leeg
+
+            for (let i = 0; i < 7; i++) {
+                let dateOffset = i - 3;
+                let date = new Date();
+                date.setDate(date.getDate() + dateOffset);
+                let dateKey = date.toISOString().split('T')[0];
+                let dayName = dateOffset === 0 ? "Vandaag" : days[date.getDay()];
+
+                // Status bepalen
+                const isFuture = dateOffset > 0;
+                const isPast = dateOffset < 0;
+                const weather = dailyWeather[dateKey] || { isRainy: false, code: 0 };
+                const shouldMuteSchedules = cancelOnRain && weather.isRainy;
+
+                // Mock data logica
+                let hasData = !isFuture && (Math.random() > 0.2 || dateOffset === 0);
+                let currentLiters = {{ data.water_level }
+            };
+            let displayLiters = dateOffset === 0 ? currentLiters : Math.floor(Math.random() * 200);
+            let percentFill = (displayLiters / 200) * 100;
+
+            // Weer icoon bepalen
+            let weatherIcon = '☀️';
+            if (weather.code >= 51) weatherIcon = '🌧️';
+            else if (weather.code >= 1 && weather.code <= 3) weatherIcon = '🌤️';
+
             let cardHtml = `
-                <div class="snap-center shrink-0 w-80 bg-white rounded-xl shadow-md border border-slate-100 p-5 flex flex-col ${dateOffset === 0 ? 'ring-2 ring-blue-500' : ''}">
-                    <div class="flex justify-between items-center mb-4">
+            <div class="snap-center shrink-0 w-80 bg-white rounded-xl shadow-md border border-slate-100 p-5 flex flex-col relative ${dateOffset === 0 ? 'ring-2 ring-blue-500' : ''}">
+                
+                <div class="flex justify-between items-center mb-4">
+                    <div>
                         <h3 class="font-bold text-lg text-slate-800">${dayName}</h3>
-                        <span class="text-xs font-semibold text-slate-500">Batt: 3 - 5</span>
+                        <p class="text-[10px] text-slate-400">${date.toLocaleDateString('nl-NL')}</p>
                     </div>
-                    
-                    <div class="flex gap-4">
-                        <div class="flex-shrink-0">
+                    <div class="text-xl" title="Voorspelling">${weatherIcon}</div>
+                </div>
+
+                <div class="flex gap-4 relative">
+                    <div class="flex-shrink-0 w-24">
+                        ${isFuture ? `
+                            <div class="water-box flex items-center justify-center bg-slate-50 border-dashed">
+                                <span class="text-[10px] text-slate-400 text-center px-2 italic">Nog geen data</span>
+                            </div>
+                        ` : hasData ? `
                             <div class="water-box">
-                                <div class="water-line" style="bottom: ${mockHighLine}%;" title="Hoogste niveau"></div>
-                                <div class="water-line" style="bottom: ${mockLowLine}%; border-top-color: #f59e0b;" title="Laagste niveau"></div>
                                 <div class="water-fill" style="height: ${percentFill}%;"></div>
                             </div>
-                            <p class="text-center text-xs mt-2 font-bold text-blue-700">${mockLiters.toFixed(1)} L</p>
-                        </div>
-                        
-                        <div class="flex-grow flex flex-col gap-2">
-                            <div class="text-xs font-semibold text-slate-400 uppercase border-b pb-1">Schema's</div>
-                            
-                            <div class="bg-blue-50 p-2 rounded text-xs border border-blue-100">
-                                <div class="font-bold text-blue-800">08:00 (1u)</div>
-                                <div class="text-blue-600">Sip</div>
-                                <div class="text-slate-400 text-[10px] mt-1">Herhaalt elke 2 dagen</div>
+                            <p class="text-center text-xs mt-2 font-bold text-blue-700">${displayLiters} L</p>
+                        ` : `
+                            <div class="water-box flex items-center justify-center bg-slate-100">
+                                <span class="text-[10px] text-slate-400 text-center px-2">Geen meting</span>
                             </div>
-                            ${dateOffset === 0 ? `
-                            <div class="bg-amber-50 p-2 rounded text-xs border border-amber-100 mt-1">
-                                <div class="font-bold text-amber-800">18:30 (30m)</div>
-                                <div class="text-amber-600">Rustig</div>
-                            </div>` : ''}
+                        `}
+                    </div>
 
-                            <button onclick="openGraph()" class="mt-auto bg-slate-100 hover:bg-slate-200 text-slate-700 py-1.5 rounded text-sm font-medium transition">
-                                Bekijk Grafiek
-                            </button>
+                    <div class="flex-grow flex flex-col gap-2">
+                        <div class="text-xs font-semibold text-slate-400 uppercase border-b pb-1">Schema</div>
+                        
+                        <div class="space-y-2 ${shouldMuteSchedules ? 'schedule-muted' : ''}">
+                            <div class="bg-blue-50 p-2 rounded text-xs border border-blue-100">
+                                <div class="font-bold">08:00 - Sip</div>
+                            </div>
                         </div>
+
+                        ${shouldMuteSchedules ? `
+                            <div class="rain-warning p-2 rounded text-[10px] font-medium flex items-center gap-1">
+                                <span>🌧️</span> Geannuleerd wegens regen
+                            </div>
+                        ` : ''}
+
+                        ${!isFuture ? `
+                            <button onclick="openGraph()" class="mt-auto bg-slate-100 hover:bg-slate-200 text-slate-700 py-1.5 rounded text-sm font-medium transition">
+                                Historiek
+                            </button>
+                        ` : `
+                            <div class="mt-auto py-1.5 text-center text-[10px] text-slate-300 italic">Data volgt...</div>
+                        `}
                     </div>
                 </div>
-            `;
+            </div>
+        `;
             carousel.innerHTML += cardHtml;
         }
 
-        window.onload = () => {
-            const centerCard = carousel.children[3];
-            centerCard.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-        };
+        // Scroll naar 'Vandaag'
+        const centerCard = carousel.children[3];
+        if (centerCard) centerCard.scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'center' });
+}
 
-        // --- GRAFIEK MODAL ---
-        let chartInstance = null;
-        function openGraph() {
-            document.getElementById('graph-modal').classList.remove('hidden');
-            const ctx = document.getElementById('historyChart').getContext('2d');
-            if (chartInstance) chartInstance.destroy();
-            
-            chartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '23:59'],
-                    datasets: [
-                        { label: 'Water (Liters)', data: [150, 145, 140, 120, 115, 110, 105], borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', fill: true, yAxisID: 'y' },
-                        { label: 'Batterij (0-5)', data: [5, 5, 4, 4, 4, 3, 3], borderColor: '#10b981', stepped: true, yAxisID: 'y1' }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: { type: 'linear', display: true, position: 'left', min: 0, max: maxLiters },
-                        y1: { type: 'linear', display: true, position: 'right', min: 0, max: 5, grid: { drawOnChartArea: false } }
-                    }
-                }
-            });
-        }
-        function closeGraph() { document.getElementById('graph-modal').classList.add('hidden'); }
-
-        // --- EDITOR MODAL ---
-        function openEditor() { document.getElementById('editor-modal').classList.remove('hidden'); }
-        function closeEditor() { document.getElementById('editor-modal').classList.add('hidden'); }
-        
-        function switchTab(tab) {
-            const btnToday = document.getElementById('tab-today');
-            const btnTomorrow = document.getElementById('tab-tomorrow');
-            const listToday = document.getElementById('list-today');
-            const listTomorrow = document.getElementById('list-tomorrow');
-
-            if(tab === 'today') {
-                btnToday.className = "pb-2 font-bold text-blue-600 border-b-2 border-blue-600";
-                btnTomorrow.className = "pb-2 font-bold text-slate-500";
-                listToday.classList.remove('hidden');
-                listTomorrow.classList.add('hidden');
-            } else {
-                btnTomorrow.className = "pb-2 font-bold text-blue-600 border-b-2 border-blue-600";
-                btnToday.className = "pb-2 font-bold text-slate-500";
-                listTomorrow.classList.remove('hidden');
-                listToday.classList.add('hidden');
-            }
-        }
-
-        function saveSchedule() {
-            // Bouw de 48 character strings
-            let todayArr = Array(48).fill('-');
-            let tomorrowArr = Array(48).fill('-');
-
-            document.querySelectorAll('.schedule-select-today').forEach(select => {
-                todayArr[select.dataset.index] = select.value;
-            });
-            document.querySelectorAll('.schedule-select-tomorrow').forEach(select => {
-                tomorrowArr[select.dataset.index] = select.value;
-            });
-
-            const payload = {
-                today_schedule: todayArr.join(''),
-                tomorrow_schedule: tomorrowArr.join('')
-            };
-
-            fetch('/api/schedule', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            }).then(res => res.json()).then(data => {
-                if(data.status === 'success') {
-                    alert('Schemas succesvol opgeslagen! De regenton zal deze ophalen bij de volgende synchronisatie.');
-                    closeEditor();
-                }
-            });
-        }
+        // Zorg dat de carrousel herlaadt als de regen-toggle verandert
+        document.querySelector('input[type="checkbox"]').addEventListener('change', renderCarousel);
     </script>
 </body>
+
 </html>
