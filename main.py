@@ -2,133 +2,131 @@ import os
 import json
 import time
 import requests
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
 
+# Configuratie
+BARREL_NAME = "Slimme Regenton"
 VERCEL_BLOB_TOKEN = os.environ.get('BLOB_READ_WRITE_TOKEN')
 
 class Storage:
     FILE_NAME = "barrel_state.json"
+    DEFAULT_STATE = {
+        "water_level": 0.0,
+        "max_liters": 200.0, 
+        "battery": 0,
+        "last_updated": 0,
+        "today_version": 1,
+        "tomorrow_version": 1,
+        "today_schedule": "-" * 48, 
+        "tomorrow_schedule": "-" * 48,
+        "cancel_rainy": False
+    }
 
     @classmethod
     def get_data(cls):
         if VERCEL_BLOB_TOKEN:
-            blob_url = os.environ.get('VERCEL_BLOB_URL')
-            if blob_url:
-                try:
-                    return requests.get(blob_url).json()
-                except:
-                    pass
-        else:
-            if os.path.exists(cls.FILE_NAME):
-                with open(cls.FILE_NAME, 'r') as f:
-                    return json.load(f)
-        
-        # Standaard lege status (water_level in liters)
-        return {
-            "water_level": 0.0,
-            "max_liters": 200.0, # Toegevoegd voor capaciteit berekening
-            "battery": 0,
-            "last_updated": 0,
-            "today_version": 1,
-            "tomorrow_version": 1,
-            "today_schedule": "-" * 48, # 48 halve uren
-            "tomorrow_schedule": "-" * 48,
-            "cancel_rainy": False
-        }
+            headers = {"Authorization": f"Bearer {VERCEL_BLOB_TOKEN}"}
+            try:
+                # Zoek het bestand in Vercel Blob
+                list_resp = requests.get(f"https://blob.vercel-storage.com/?prefix={cls.FILE_NAME}", headers=headers).json()
+                if list_resp.get("blobs"):
+                    url = list_resp["blobs"][0]["url"]
+                    return requests.get(url).json()
+            except Exception as e:
+                print(f"Blob Error: {e}")
+        return cls.DEFAULT_STATE
 
     @classmethod
     def save_data(cls, data):
         if VERCEL_BLOB_TOKEN:
-            headers = {"Authorization": f"Bearer {VERCEL_BLOB_TOKEN}"}
+            headers = {
+                "Authorization": f"Bearer {VERCEL_BLOB_TOKEN}",
+                "x-add-random-suffix": "false"
+            }
             requests.put(
                 f"https://blob.vercel-storage.com/{cls.FILE_NAME}",
                 headers=headers,
                 data=json.dumps(data)
             )
-        else:
-            with open(cls.FILE_NAME, 'w') as f:
-                json.dump(data, f)
 
-@app.route('/', methods=['GET', 'POST'])
-def index():
-    if request.method == 'POST':
-        barrel_name = request.form.get('barrel_name')
-        if barrel_name:
-            return redirect(url_for('dashboard', barrel_name=barrel_name))
-    return render_template('index.html')
-
-@app.route('/setup')
-def setup():
-    return render_template('setup.html')
-
-@app.route('/dashboard/<barrel_name>')
-def dashboard(barrel_name):
+@app.route('/')
+def dashboard():
     data = Storage.get_data()
-    last_updated_mins = int((time.time() - data.get('last_updated', time.time())) / 60)
+    last_updated_mins = int((time.time() - data['last_updated']) / 60) if data['last_updated'] > 0 else "?"
     
-    # Genereer tijdsloten voor de UI editor (00:00, 00:30, etc.)
-    timeslots = []
-    for h in range(24):
-        timeslots.append(f"{h:02d}:00")
-        timeslots.append(f"{h:02d}:30")
-
+    # Genereer tijdslots voor de editor (00:00, 00:30, etc.)
+    timeslots = [f"{str(h).zfill(2)}:{str(m).zfill(2)}" for h in range(24) for m in (0, 30)]
+    
     return render_template('dashboard.html', 
-                           barrel_name=barrel_name, 
-                           data=data, 
-                           last_updated_mins=last_updated_mins,
-                           timeslots=timeslots)
+                         data=data, 
+                         barrel_name=BARREL_NAME, 
+                         last_updated_mins=last_updated_mins,
+                         timeslots=timeslots)
+
+@app.route('/api/status', methods=['POST'])
+def update_status():
+    """
+    Input van ton: "t1715673600, v1|1, b4, w145.2"
+    Output naar ton: "yn[versie3][schedule48]..."
+    """
+    try:
+        raw_input = request.data.decode('utf-8')
+        server_data = Storage.get_data()
+        
+        # Parsen van de ton string
+        parts = {p.strip()[0]: p.strip()[1:] for p in raw_input.split(',')}
+        v_parts = parts['v'].split('|')
+        ton_v_today = int(v_parts[0])
+        ton_v_tomorrow = int(v_parts[1])
+
+        # Sla nieuwe status op
+        server_data['last_updated'] = int(time.time())
+        server_data['battery'] = int(parts['b'])
+        server_data['water_level'] = float(parts['w'])
+        Storage.save_data(server_data)
+
+        # Bepaal 'y' of 'n'
+        up_today = "y" if server_data['today_version'] > ton_v_today else "n"
+        up_tomorrow = "y" if server_data['tomorrow_version'] > ton_v_tomorrow else "n"
+        
+        response_str = f"{up_today}{up_tomorrow}"
+
+        # Voeg schema data toe indien nodig
+        if up_today == "y":
+            v_str = str(server_data['today_version']).zfill(3)
+            response_str += f"{v_str}{server_data['today_schedule']}"
+            
+        if up_tomorrow == "y":
+            v_str = str(server_data['tomorrow_version']).zfill(3)
+            response_str += f"{v_str}{server_data['tomorrow_schedule']}"
+
+        return response_str # Plain text response voor de ton
+
+    except Exception as e:
+        return f"error: {str(e)}", 400
 
 @app.route('/api/schedule', methods=['POST'])
-def update_schedule():
-    """Verwerkt schema updates vanuit het web dashboard"""
-    req_data = request.json
-    state = Storage.get_data()
+def save_schedule():
+    """Update vanuit het dashboard"""
+    web_data = request.json
+    server_data = Storage.get_data()
+
+    # Update today schedule + versie
+    if server_data['today_schedule'] != web_data['today_schedule']:
+        server_data['today_schedule'] = web_data['today_schedule']
+        server_data['today_version'] += 1
+
+    # Update tomorrow schedule + versie
+    if server_data['tomorrow_schedule'] != web_data['tomorrow_schedule']:
+        server_data['tomorrow_schedule'] = web_data['tomorrow_schedule']
+        server_data['tomorrow_version'] += 1
+
+    server_data['cancel_rainy'] = web_data.get('cancel_rainy', False)
     
-    if 'today_schedule' in req_data and req_data['today_schedule'] != state['today_schedule']:
-        state['today_schedule'] = req_data['today_schedule']
-        state['today_version'] += 1
-        
-    if 'tomorrow_schedule' in req_data and req_data['tomorrow_schedule'] != state['tomorrow_schedule']:
-        state['tomorrow_schedule'] = req_data['tomorrow_schedule']
-        state['tomorrow_version'] += 1
-        
-    Storage.save_data(state)
+    Storage.save_data(server_data)
     return jsonify({"status": "success"})
 
-@app.route('/api/update', methods=['POST'])
-def api_update():
-    """IoT Endpoint voor de regenton"""
-    req_data = request.json or {}
-    state = Storage.get_data()
-    
-    state['last_updated'] = req_data.get('timestamp', int(time.time()))
-    state['water_level'] = req_data.get('water', state['water_level'])
-    state['battery'] = req_data.get('battery', state['battery'])
-    
-    Storage.save_data(state)
-
-    barrel_today_v = req_data.get('today_version', 0)
-    barrel_tomorrow_v = req_data.get('tomorrow_version', 0)
-    
-    server_today_v = state.get('today_version', 1)
-    server_tomorrow_v = state.get('tomorrow_version', 1)
-    
-    send_today = server_today_v > barrel_today_v
-    send_tomorrow = server_tomorrow_v > barrel_tomorrow_v
-
-    if send_today and send_tomorrow: header = "yy"
-    elif send_today and not send_tomorrow: header = "yn"
-    elif not send_today and send_tomorrow: header = "ny"
-    else: header = "nn"
-
-    today_str = state['today_schedule'] if send_today else " " * 48
-    tomorrow_str = state['tomorrow_schedule'] if send_tomorrow else " " * 48
-
-    response_string = f"{header}{today_str}{tomorrow_str}"
-    
-    return response_string, 200, {'Content-Type': 'text/plain'}
-
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True)
