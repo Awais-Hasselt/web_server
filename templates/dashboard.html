@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ barrel_name }} - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Hide scrollbar for the horizontal carousel */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .water-box {
+            position: relative;
+            width: 80px;
+            height: 150px;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: #f8fafc;
+            margin: 0 auto;
+        }
+        .water-fill {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background-color: #3b82f6; /* Tailwind blue-500 */
+            transition: height 0.5s ease;
+        }
+        .water-line {
+            position: absolute;
+            width: 100%;
+            border-top: 1px dashed #ef4444; /* red dashed line */
+            z-index: 10;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 font-sans text-slate-800 pb-12">
+
+    <div class="bg-white shadow px-6 py-4 flex flex-wrap justify-between items-center sticky top-0 z-20">
+        <div>
+            <h1 class="text-2xl font-bold text-blue-700">{{ barrel_name }}</h1>
+            <p class="text-xs text-slate-500">Last updated: {{ last_updated_mins }} minutes ago</p>
+        </div>
+        
+        <div class="flex items-center gap-6 mt-4 sm:mt-0">
+            <div class="text-center">
+                <span class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Battery</span>
+                <span class="text-lg font-bold">{{ data.battery }}/5</span>
+            </div>
+            <div class="text-center">
+                <span class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Water</span>
+                <span class="text-lg font-bold">{{ data.water_level }}%</span>
+            </div>
+            <div class="text-center border-l border-slate-200 pl-6">
+                <span class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Weather</span>
+                <span id="weather-info" class="text-lg font-bold">Loading...</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-6 mt-6 flex justify-end">
+        <label class="flex items-center cursor-pointer space-x-3">
+            <span class="text-sm font-medium text-slate-700">Cancel schedules on rainy days</span>
+            <div class="relative">
+                <input type="checkbox" class="sr-only peer" {% if data.cancel_rainy %}checked{% endif %}>
+                <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+            </div>
+        </label>
+    </div>
+
+    <div class="mt-6 w-full overflow-hidden">
+        <div class="flex gap-6 overflow-x-auto no-scrollbar px-6 pb-6 snap-x snap-mandatory" id="carousel">
+            </div>
+    </div>
+
+    <div id="graph-modal" class="hidden fixed inset-0 bg-slate-900 bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-3xl p-6 relative">
+            <button onclick="closeGraph()" class="absolute top-4 right-4 text-slate-500 hover:text-slate-800 text-2xl font-bold">&times;</button>
+            <h2 class="text-xl font-bold mb-4">Historical Data</h2>
+            <canvas id="historyChart" height="100"></canvas>
+        </div>
+    </div>
+
+    <script>
+        // --- OPEN-METEO WEATHER FETCH ---
+        // Coordinates set to Diepenbeek, Flanders, Belgium as per context
+        fetch('https://api.open-meteo.com/v1/forecast?latitude=50.93&longitude=5.42&current_weather=true')
+            .then(res => res.json())
+            .then(data => {
+                const temp = data.current_weather.temperature;
+                document.getElementById('weather-info').innerText = `${temp}°C`;
+            })
+            .catch(err => document.getElementById('weather-info').innerText = 'N/A');
+
+        // --- CAROUSEL RENDERER ---
+        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const todayIdx = new Date().getDay();
+        const carousel = document.getElementById('carousel');
+
+        // Generate 7 days of cards
+        for (let i = 0; i < 7; i++) {
+            // Start from 3 days ago to 3 days ahead, so today is centered
+            let dateOffset = i - 3; 
+            let date = new Date();
+            date.setDate(date.getDate() + dateOffset);
+            let dayName = dateOffset === 0 ? "Today" : days[date.getDay()];
+            
+            // Mock Daily Stats 
+            let mockWaterLevel = dateOffset === 0 ? {{ data.water_level }} : Math.floor(Math.random() * 60) + 20;
+            let mockHighLine = Math.min(100, mockWaterLevel + 15);
+            let mockLowLine = Math.max(0, mockWaterLevel - 10);
+            
+            let cardHtml = `
+                <div class="snap-center shrink-0 w-80 bg-white rounded-xl shadow-md border border-slate-100 p-5 flex flex-col ${dateOffset === 0 ? 'ring-2 ring-blue-500' : ''}">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-lg text-slate-800">${dayName}</h3>
+                        <span class="text-xs font-semibold text-slate-500">Batt: 3 - 5</span>
+                    </div>
+                    
+                    <div class="flex gap-4">
+                        <div class="flex-shrink-0">
+                            <div class="water-box">
+                                <div class="water-line" style="bottom: ${mockHighLine}%;" title="Highest Level"></div>
+                                <div class="water-line" style="bottom: ${mockLowLine}%; border-top-color: #f59e0b;" title="Lowest Level"></div>
+                                <div class="water-fill" style="height: ${mockWaterLevel}%;"></div>
+                            </div>
+                            <p class="text-center text-xs mt-2 font-bold text-slate-600">${mockWaterLevel}%</p>
+                        </div>
+                        
+                        <div class="flex-grow flex flex-col gap-2">
+                            <div class="text-xs font-semibold text-slate-400 uppercase border-b pb-1">Schedules</div>
+                            
+                            <div class="bg-blue-50 p-2 rounded text-xs border border-blue-100">
+                                <div class="font-bold text-blue-800">08:00 (1hr)</div>
+                                <div class="text-blue-600">Sip (5s ON/5m OFF)</div>
+                                <div class="text-slate-400 text-[10px] mt-1">Repeats every 2 days</div>
+                            </div>
+                            ${dateOffset === 0 ? `
+                            <div class="bg-amber-50 p-2 rounded text-xs border border-amber-100 mt-1">
+                                <div class="font-bold text-amber-800">18:30 (30m)</div>
+                                <div class="text-amber-600">Steady (10s ON/2m OFF)</div>
+                            </div>` : ''}
+
+                            <button onclick="openGraph()" class="mt-auto bg-slate-100 hover:bg-slate-200 text-slate-700 py-1.5 rounded text-sm font-medium transition">
+                                View Graph
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            carousel.innerHTML += cardHtml;
+        }
+
+        // Center the carousel on load
+        window.onload = () => {
+            const centerCard = carousel.children[3];
+            centerCard.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        };
+
+        // --- GRAPH MODAL ---
+        let chartInstance = null;
+        function openGraph() {
+            document.getElementById('graph-modal').classList.remove('hidden');
+            const ctx = document.getElementById('historyChart').getContext('2d');
+            
+            if (chartInstance) chartInstance.destroy();
+            
+            // Mock historical data mapping
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '23:59'],
+                    datasets: [
+                        {
+                            label: 'Water Level (%)',
+                            data: [65, 63, 62, 55, 54, 52, 50],
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            fill: true,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Battery (0-5)',
+                            data: [5, 5, 4, 4, 4, 3, 3],
+                            borderColor: '#10b981',
+                            backgroundColor: 'transparent',
+                            stepped: true,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    interaction: { mode: 'index', intersect: false },
+                    scales: {
+                        y: { type: 'linear', display: true, position: 'left', min: 0, max: 100 },
+                        y1: { type: 'linear', display: true, position: 'right', min: 0, max: 5, grid: { drawOnChartArea: false } }
+                    }
+                }
+            });
+        }
+
+        function closeGraph() {
+            document.getElementById('graph-modal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

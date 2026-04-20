@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Awais Setup Manual</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen p-8">
+    <div class="max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-lg">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">Awais Setup Manual</h1>
+        <a href="/" class="text-blue-500 hover:underline mb-8 block">&larr; Back to Home</a>
+        
+        <ul class="space-y-4 text-gray-700 list-disc list-inside">
+            <li>When powering the barrel you will hear <strong>one beep</strong>.</li>
+            <li>If this is the first time using the barrel, you will hear <strong>two beeps</strong> in a few seconds. This indicates that its setup mode is started.</li>
+            <li>If you configured your barrel before, and you want to start the setup mode manually to reconfigure it, then <strong>hold the button</strong> on the barrel while powering it. Hold this until it beeps twice, indicating setup mode.</li>
+            <li>When setup mode is started, it will create a WiFi network called <code class="bg-gray-100 px-2 py-1 rounded text-blue-600">awais-connect</code>. Connect to this network. <em>Note that you cannot access the internet while connected.</em></li>
+            <li>Visit <a href="http://awais.local" class="text-blue-500 underline">http://awais.local</a> in your web browser (this might take a while to load).</li>
+            <li>Enter your network credentials and a name for the barrel to configure the barrel to use your WiFi (or hotspot). <em>Note: you cannot use enterprise networks with a user and password. Only use networks with just an SSID and password.</em></li>
+            <li>After saving your credentials, the barrel will restart (and the awais-connect network will disappear) and try to connect to your WiFi.</li>
+            <li>If you hear <strong>three beeps</strong>, it has connected. If it cannot connect, you will hear <strong>five beeps</strong>.</li>
+        </ul>
+    </div>
+</body>
+</html>
