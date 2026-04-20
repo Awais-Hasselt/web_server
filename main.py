@@ -13,7 +13,6 @@ VERCEL_BLOB_TOKEN = os.environ.get('BLOB_READ_WRITE_TOKEN')
 class Storage:
     @classmethod
     def get_filename(cls, barrel_name):
-        """Genereert een veilige MD5 hash voor de bestandsnaam."""
         safe_id = hashlib.md5(barrel_name.strip().encode()).hexdigest()
         return f"barrel_{safe_id}.json"
 
@@ -38,7 +37,7 @@ class Storage:
         if not create_if_missing:
             return None
 
-        # Fallback / Nieuwe Ton configuratie
+        # ECHTE LEGE DATA (Geen dummies meer)
         return {
             "barrel_name": barrel_name,
             "water_level": 0.0,
@@ -47,8 +46,8 @@ class Storage:
             "last_updated": 0,
             "today_version": 1,
             "tomorrow_version": 1,
-            "today_schedule": "-" * 48, 
-            "tomorrow_schedule": "-" * 48,
+            "today_schedule": "-" * 48, # 48 lege slots
+            "tomorrow_schedule": "-" * 48, # 48 lege slots
             "cancel_rainy": False
         }
 
@@ -84,7 +83,6 @@ def index():
                 error = f"Geen ton gevonden met de naam '{barrel_name}'. Controleer de spelling of verbind je ton eerst."
         else:
             error = "Vul a.u.b. een naam in."
-            
     return render_template('index.html', error=error)
 
 @app.route('/dashboard/<barrel_name>')
@@ -112,28 +110,38 @@ def update_status():
         barrel_name = raw_body[0].strip()
         status_line = raw_body[1].strip()
         
-        # Bij API status maken we de ton WEL aan als hij niet bestaat
-        server_data = Storage.get_data(barrel_name, create_if_missing=True)
+        # Check of de ton al bestaat. Zo niet: create_if_missing geeft de lege v1 configuratie.
+        # We slaan dit direct op zodat de server "baas" is over v1.
+        server_data = Storage.get_data(barrel_name)
+        if not server_data:
+            server_data = Storage.get_data(barrel_name, create_if_missing=True)
+            Storage.save_data(barrel_name, server_data)
         
+        # Parsen van de status regel: t..., v..., b..., w...
         parts = {p.strip()[0]: p.strip()[1:] for p in status_line.split(',')}
         v_parts = parts['v'].split('|')
         ton_v_today = int(v_parts[0])
         ton_v_tomorrow = int(v_parts[1])
 
+        # Update de status (altijd)
         server_data['last_updated'] = int(time.time())
         server_data['battery'] = int(parts['b'])
         server_data['water_level'] = float(parts['w'])
         Storage.save_data(barrel_name, server_data)
 
-        up_today = "y" if server_data['today_version'] > ton_v_today else "n"
-        up_tomorrow = "y" if server_data['tomorrow_version'] > ton_v_tomorrow else "n"
+        # Check of versie van ton AFWIJKT van server (niet alleen lager)
+        up_today = "y" if server_data['today_version'] != ton_v_today else "n"
+        up_tomorrow = "y" if server_data['tomorrow_version'] != ton_v_tomorrow else "n"
         
         response = f"{up_today}{up_tomorrow}"
 
+        # Stuur data blokken voor elke 'y'
         if up_today == "y":
-            response += f"{str(server_data['today_version']).zfill(3)}{server_data['today_schedule']}"
+            v_str = str(server_data['today_version']).zfill(3)
+            response += f"{v_str}{server_data['today_schedule']}"
         if up_tomorrow == "y":
-            response += f"{str(server_data['tomorrow_version']).zfill(3)}{server_data['tomorrow_schedule']}"
+            v_str = str(server_data['tomorrow_version']).zfill(3)
+            response += f"{v_str}{server_data['tomorrow_schedule']}"
 
         return response
 
@@ -149,6 +157,7 @@ def save_schedule():
     if not server_data:
         return jsonify({"status": "error", "message": "Ton niet gevonden"}), 404
 
+    # Alleen versie ophogen als de string echt anders is
     if server_data['today_schedule'] != web_data['today_schedule']:
         server_data['today_schedule'] = web_data['today_schedule']
         server_data['today_version'] += 1
