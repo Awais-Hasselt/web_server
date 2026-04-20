@@ -6,7 +6,7 @@ from flask import Flask, render_template, request, redirect, url_for, jsonify
 
 app = Flask(__name__)
 
-VERCEL_BLOB_TOKEN = os.environ.get('VERCEL_BLOB_TOKEN')
+VERCEL_BLOB_TOKEN = os.environ.get('BLOB_READ_WRITE_TOKEN')
 
 class Storage:
     FILE_NAME = "barrel_state.json"
