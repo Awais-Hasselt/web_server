@@ -3,8 +3,8 @@ import requests
 import os
 import json
 import time
-VERCEL_BLOB_TOKEN = os.environ.get('BLOB_READ_WRITE_TOKEN')
 
+VERCEL_BLOB_TOKEN = os.environ.get('BLOB_READ_WRITE_TOKEN')
 
 class Storage:
     @classmethod
@@ -16,6 +16,7 @@ class Storage:
     def get_data(cls, barrel_name, create_if_missing=False):
         filename = cls.get_filename(barrel_name)
         
+        # 1. Try Vercel Blob
         if VERCEL_BLOB_TOKEN:
             headers = {"Authorization": f"Bearer {VERCEL_BLOB_TOKEN}"}
             try:
@@ -29,11 +30,18 @@ class Storage:
                     return data
             except Exception as e:
                 print(f"Blob Read Error: {e}")
+        # 2. Local Fallback (for testing without Vercel)
+        else:
+            if os.path.exists(filename):
+                with open(filename, 'r') as f:
+                    data = json.load(f)
+                    data['barrel_name'] = barrel_name
+                    return data
 
         if not create_if_missing:
             return None
 
-        # ECHTE LEGE DATA (Geen dummies meer)
+        # ECHTE LEGE DATA
         return {
             "barrel_name": barrel_name,
             "water_level": 0.0,
@@ -42,24 +50,23 @@ class Storage:
             "last_updated": 0,
             "today_version": 1,
             "tomorrow_version": 1,
-            "today_schedule": "-" * 48, # 48 lege slots
-            "tomorrow_schedule": "-" * 48, # 48 lege slots
-            "cancel_rainy": False
+            "today_schedule": "-" * 48, 
+            "tomorrow_schedule": "-" * 48, 
+            "cancel_rainy": False,
+            "history": [] # Fixed: Always initialize empty history
         }
 
     @classmethod
     def save_data(cls, barrel_name, data):
         filename = cls.get_filename(barrel_name)
         
-        # Load existing data to preserve history
-        existing = cls.get_data(barrel_name) or {}
-        history = existing.get('history', [])
+        # Fixed: No need to re-fetch data from Vercel! Just use the passed data dict.
+        history = data.get('history', [])
         
         # Add new point: [timestamp, liters]
-        # We use int(time.time()) for the X-axis of the graph
-        history.append([int(time.time()), data['water_level']])
+        history.append([int(time.time()), data.get('water_level', 0.0)])
         
-        # Keep only the last 100 entries to prevent the file from growing forever
+        # Keep only the last 100 entries
         data['history'] = history[-100:]
         data['barrel_name'] = barrel_name
         
@@ -69,8 +76,15 @@ class Storage:
                 "x-add-random-suffix": "false",
                 "Content-Type": "application/json"
             }
-            requests.put(
-                f"https://blob.vercel-storage.com/{filename}",
-                headers=headers,
-                data=json.dumps(data)
-            )
+            try:
+                requests.put(
+                    f"https://blob.vercel-storage.com/{filename}",
+                    headers=headers,
+                    data=json.dumps(data)
+                )
+            except Exception as e:
+                print(f"Blob Write Error: {e}")
+        else:
+            # Local fallback save
+            with open(filename, 'w') as f:
+                json.dump(data, f)
