@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="nl">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,12 +8,45 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .water-box { position: relative; width: 80px; height: 150px; border: 2px solid #cbd5e1; border-radius: 8px; overflow: hidden; background-color: #f8fafc; margin: 0 auto; }
-        .water-fill { position: absolute; bottom: 0; width: 100%; background-color: #3b82f6; transition: height 0.5s ease; }
-        .schedule-muted { opacity: 0.35; filter: grayscale(1); pointer-events: none; }
-        .rain-warning { border: 1px solid #fbbf24; background: #fffbeb; color: #92400e; }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .water-box {
+            position: relative;
+            width: 80px;
+            height: 150px;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: #f8fafc;
+            margin: 0 auto;
+        }
+
+        .water-fill {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background-color: #3b82f6;
+            transition: height 0.5s ease;
+        }
+
+        .schedule-muted {
+            opacity: 0.35;
+            filter: grayscale(1);
+            pointer-events: none;
+        }
+
+        .rain-warning {
+            border: 1px solid #fbbf24;
+            background: #fffbeb;
+            color: #92400e;
+        }
     </style>
 </head>
 
@@ -29,10 +63,14 @@
                 <span class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Batterij</span>
                 <div class="flex items-center border-2 border-slate-300 rounded-sm p-[2px] gap-[2px] w-12 h-5 relative">
                     <div class="absolute -right-1.5 top-1 h-2 w-1 bg-slate-300 rounded-r-sm"></div>
-                    {% set bat_colors = ['bg-red-500', 'bg-orange-500', 'bg-yellow-400', 'bg-lime-400', 'bg-green-500'] %}
-                    {% set active_color = bat_colors[(data.battery|int) - 1] if (data.battery|int) > 0 else 'bg-slate-200' %}
+                    {% set bat_colors = ['bg-red-500', 'bg-orange-500', 'bg-yellow-400', 'bg-lime-400', 'bg-green-500']
+                    %}
+                    {% set active_color = bat_colors[(data.battery|int) - 1] if (data.battery|int) > 0 else
+                    'bg-slate-200' %}
                     {% for i in range(5) %}
-                    <div class="flex-1 h-full rounded-sm {{ active_color if i < (data.battery|int) else 'bg-slate-200' }}"></div>
+                    <div
+                        class="flex-1 h-full rounded-sm {{ active_color if i < (data.battery|int) else 'bg-slate-200' }}">
+                    </div>
                     {% endfor %}
                 </div>
             </div>
@@ -53,15 +91,18 @@
     </div>
 
     <div class="max-w-7xl mx-auto px-6 mt-6 flex flex-wrap justify-between items-center gap-4">
-        <button onclick="openEditor()" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition font-medium text-sm">
+        <button onclick="openEditor()"
+            class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition font-medium text-sm">
             ⚙️ Schema's Bewerken
         </button>
 
         <label class="flex items-center cursor-pointer space-x-3">
             <span class="text-sm font-medium text-slate-700">Annuleer schema's op regendagen</span>
             <div class="relative">
-                <input type="checkbox" id="rain-toggle" class="sr-only peer" {% if data.cancel_rainy %}checked{% endif %} onchange="renderCarousel()">
-                <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
+                <input type="checkbox" id="rain-toggle" class="sr-only peer" {% if data.cancel_rainy %}checked{% endif
+                    %} onchange="renderCarousel()">
+                <div
+                    class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
                 </div>
             </div>
         </label>
@@ -71,21 +112,27 @@
         <div class="flex gap-6 overflow-x-auto no-scrollbar px-6 pb-6 snap-x snap-mandatory" id="carousel"></div>
     </div>
 
-    <div id="graph-modal" class="hidden fixed inset-0 bg-slate-900 bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div id="graph-modal"
+        class="hidden fixed inset-0 bg-slate-900 bg-opacity-50 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-3xl p-6 relative">
-            <button onclick="closeGraph()" class="absolute top-4 right-4 text-slate-500 hover:text-slate-800 text-2xl font-bold">&times;</button>
+            <button onclick="closeGraph()"
+                class="absolute top-4 right-4 text-slate-500 hover:text-slate-800 text-2xl font-bold">&times;</button>
             <h2 class="text-xl font-bold mb-4">Historische Data</h2>
             <canvas id="historyChart" height="100"></canvas>
         </div>
     </div>
 
-    <div id="editor-modal" class="hidden fixed inset-0 bg-slate-900 bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div id="editor-modal"
+        class="hidden fixed inset-0 bg-slate-900 bg-opacity-50 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl p-6 relative max-h-[90vh] flex flex-col">
-            <button onclick="closeEditor()" class="absolute top-4 right-4 text-slate-500 hover:text-slate-800 text-2xl font-bold">&times;</button>
+            <button onclick="closeEditor()"
+                class="absolute top-4 right-4 text-slate-500 hover:text-slate-800 text-2xl font-bold">&times;</button>
             <h2 class="text-xl font-bold mb-4 text-blue-700">Schema's Bewerken</h2>
             <div class="flex gap-4 mb-4 border-b">
-                <button id="tab-today" onclick="switchTab('today')" class="pb-2 font-bold text-blue-600 border-b-2 border-blue-600">Vandaag</button>
-                <button id="tab-tomorrow" onclick="switchTab('tomorrow')" class="pb-2 font-bold text-slate-500">Morgen</button>
+                <button id="tab-today" onclick="switchTab('today')"
+                    class="pb-2 font-bold text-blue-600 border-b-2 border-blue-600">Vandaag</button>
+                <button id="tab-tomorrow" onclick="switchTab('tomorrow')"
+                    class="pb-2 font-bold text-slate-500">Morgen</button>
             </div>
             <div class="overflow-y-auto flex-grow pr-2" id="schedule-container">
                 <div id="list-today" class="space-y-2">
@@ -106,7 +153,8 @@
                     {% for i in range(48) %}
                     <div class="flex items-center justify-between bg-slate-50 p-2 rounded border">
                         <span class="font-mono font-bold text-slate-700">{{ timeslots[i] }}</span>
-                        <select class="schedule-select-tomorrow border rounded p-1 bg-white text-sm" data-index="{{ i }}">
+                        <select class="schedule-select-tomorrow border rounded p-1 bg-white text-sm"
+                            data-index="{{ i }}">
                             <option value="-" {% if data.tomorrow_schedule[i]=='-' %}selected{% endif %}>Uit</option>
                             <option value="1" {% if data.tomorrow_schedule[i]=='1' %}selected{% endif %}>Sip</option>
                             <option value="2" {% if data.tomorrow_schedule[i]=='2' %}selected{% endif %}>Rustig</option>
@@ -118,8 +166,10 @@
                 </div>
             </div>
             <div class="pt-4 mt-4 border-t flex justify-end gap-3">
-                <button onclick="closeEditor()" class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded">Annuleren</button>
-                <button onclick="saveSchedule()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-bold">Opslaan</button>
+                <button onclick="closeEditor()"
+                    class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded">Annuleren</button>
+                <button onclick="saveSchedule()"
+                    class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-bold">Opslaan</button>
             </div>
         </div>
     </div>
@@ -130,25 +180,16 @@
         const barrelHeight = 90.0;
         const maxLiters = (Math.PI * Math.pow(barrelRadius, 2) * barrelHeight) / 1000.0;
 
-        const currentWaterLiters = {{ data.water_level | tojson }};
-        const historyData = {{ data.history | default([]) | tojson }};
+        const serverData = {{ data | tojson }};
+        const historyData = serverData.history || [];
         const days = ['Zondag', 'Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag'];
 
-        const LAT = 50.9094;
-        const LON = 5.4179;
-
-        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&daily=weathercode,temperature_2m_max&current_weather=true&timezone=auto`)
+        // Haal weer op
+        fetch(`https://api.open-meteo.com/v1/forecast?latitude=50.9094&longitude=5.4179&daily=weathercode&current_weather=true&timezone=auto`)
             .then(res => res.json())
             .then(wData => {
-                const cur = wData.current_weather;
-                document.getElementById('weather-temp').innerText = `${cur.temperature}°C`;
-                document.getElementById('weather-icon').innerText = getWeatherIcon(cur.weathercode);
-
                 wData.daily.time.forEach((dateStr, index) => {
-                    dailyWeather[dateStr] = {
-                        code: wData.daily.weathercode[index],
-                        isRainy: wData.daily.weathercode[index] >= 51
-                    };
+                    dailyWeather[dateStr] = { code: wData.daily.weathercode[index], isRainy: wData.daily.weathercode[index] >= 51 };
                 });
                 renderCarousel();
             });
@@ -156,10 +197,21 @@
         function getWeatherIcon(code) {
             if (code >= 1 && code <= 3) return '🌤️';
             if (code >= 51 && code <= 67) return '🌧️';
-            if (code >= 71 && code <= 77) return '❄️';
-            if (code >= 80 && code <= 82) return '🌦️';
             if (code >= 95) return '⛈️';
             return '☀️';
+        }
+
+        function getWaterLevelForDate(dateStr) {
+            const targetDate = new Date(dateStr).setHours(0, 0, 0, 0);
+            // Zoek het laatste punt in history dat op of voor deze dag valt
+            let lastLevel = 0;
+            historyData.forEach(point => {
+                const pointDate = new Date(point[0] * 1000).setHours(0, 0, 0, 0);
+                if (pointDate <= targetDate) {
+                    lastLevel = point[1];
+                }
+            });
+            return lastLevel;
         }
 
         function renderCarousel() {
@@ -171,60 +223,54 @@
                 let dateOffset = i - 3;
                 let date = new Date();
                 date.setDate(date.getDate() + dateOffset);
-                
-                // Fixed: Ensures the constructed string matches exactly local formatting, no UTC jumps.
-                let dateKey = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
-                let dayName = dateOffset === 0 ? "Vandaag" : days[date.getDay()];
+                let dateKey = date.toISOString().split('T')[0];
 
-                const isFuture = dateOffset > 0;
                 const weather = dailyWeather[dateKey] || { isRainy: false, code: 0 };
                 const shouldMute = cancelOnRain && weather.isRainy;
 
-                let displayLiters = dateOffset === 0 ? currentWaterLiters : 0;
-                let percentFill = (displayLiters / maxLiters) * 100;
-                if (percentFill > 100) percentFill = 100;
+                // Haal water level uit historie voor deze dag
+                let displayLiters = (dateOffset === 0) ? serverData.water_level : getWaterLevelForDate(dateKey);
+                let percentFill = Math.min((displayLiters / maxLiters) * 100, 100);
 
-                let cardHtml = `
-                <div class="snap-center shrink-0 w-80 bg-white rounded-xl shadow-md border border-slate-100 p-5 flex flex-col ${dateOffset === 0 ? 'ring-2 ring-blue-500' : ''}">
-                    <div class="flex justify-between items-center mb-4">
-                        <div>
-                            <h3 class="font-bold text-lg text-slate-800">${dayName}</h3>
-                            <p class="text-[10px] text-slate-400 uppercase">${date.toLocaleDateString('nl-NL')}</p>
-                        </div>
-                        <div class="text-xl">${getWeatherIcon(weather.code)}</div>
+                // Bepaal welk schema te tonen
+                let schedStr = "------------------------------------------------";
+                if (dateOffset === 0) schedStr = serverData.today_schedule;
+                if (dateOffset === 1) schedStr = serverData.tomorrow_schedule;
+
+                // Maak schema UI
+                let activeTasks = [];
+                const typeMap = { '1': 'Sip', '2': 'Rustig', '3': 'Zwaar', 'f': 'Vloed' };
+                for (let j = 0; j < 48; j++) {
+                    if (schedStr[j] !== '-') {
+                        let h = Math.floor(j / 2);
+                        let m = (j % 2) === 0 ? "00" : "30";
+                        activeTasks.push(`<div class="flex justify-between"><span>${h}:${m}</span><b>${typeMap[schedStr[j]]}</b></div>`);
+                    }
+                }
+
+                carousel.innerHTML += `
+            <div class="snap-center shrink-0 w-80 bg-white rounded-xl shadow-md border p-5 flex flex-col ${dateOffset === 0 ? 'ring-2 ring-blue-500' : ''}">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h3 class="font-bold text-lg">${dateOffset === 0 ? "Vandaag" : days[date.getDay()]}</h3>
+                        <p class="text-[10px] text-slate-400">${date.toLocaleDateString('nl-NL')}</p>
                     </div>
-                    
-                    <div class="flex gap-4">
-                        <div class="flex-shrink-0 w-24">
-                            ${(dateOffset === 0) ? `
-                                <div class="water-box">
-                                    <div class="water-fill" style="height: ${percentFill}%;"></div>
-                                </div>
-                                <p class="text-center text-xs mt-2 font-bold text-blue-700">${displayLiters.toFixed(1)} L</p>
-                            ` : `
-                                <div class="water-box flex items-center justify-center bg-slate-100">
-                                    <span class="text-[10px] text-slate-400 text-center px-1">${isFuture ? 'Data volgt' : 'Geen data'}</span>
-                                </div>
-                            `}
+                    <div class="text-xl">${getWeatherIcon(weather.code)}</div>
+                </div>
+                <div class="flex gap-4">
+                    <div class="w-24">
+                        <div class="water-box"><div class="water-fill" style="height: ${percentFill}%;"></div></div>
+                        <p class="text-center text-xs mt-2 font-bold text-blue-700">${displayLiters.toFixed(1)} L</p>
+                    </div>
+                    <div class="flex-grow flex flex-col">
+                        <span class="text-[10px] font-bold uppercase text-slate-400 border-b mb-1">Schema</span>
+                        <div class="text-xs space-y-1 ${shouldMute ? 'schedule-muted' : ''}">
+                            ${activeTasks.length > 0 ? activeTasks.join('') : '<i class="text-slate-400">Geen taken</i>'}
                         </div>
-                        
-                        <div class="flex-grow flex flex-col gap-2">
-                            <div class="text-xs font-semibold text-slate-400 uppercase border-b pb-1">Schema</div>
-                            <div class="${shouldMute ? 'schedule-muted' : ''} space-y-2">
-                                <div class="bg-blue-50 p-2 rounded text-xs border border-blue-100">
-                                    <div class="font-bold text-blue-800">Geen actieve taken</div>
-                                </div>
-                            </div>
-                            ${dateOffset === 0 ? `
-                                <button onclick="openGraph()" class="mt-auto bg-slate-100 hover:bg-slate-200 text-slate-700 py-1.5 rounded text-sm font-medium transition">
-                                    Bekijk Historiek
-                                </button>
-                            ` : ''}
-                        </div>
+                        ${dateOffset === 0 ? `<button onclick="openGraph()" class="mt-auto bg-slate-100 py-1 rounded text-xs font-bold">Historiek</button>` : ''}
                     </div>
                 </div>
-            `;
-                carousel.innerHTML += cardHtml;
+            </div>`;
             }
         }
 
@@ -233,32 +279,43 @@
             document.getElementById('graph-modal').classList.remove('hidden');
             const ctx = document.getElementById('historyChart').getContext('2d');
 
-            const labels = historyData.map(d => new Date(d[0] * 1000).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' }));
+            const labels = historyData.map(d => new Date(d[0] * 1000).toLocaleString('nl-NL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }));
             const levels = historyData.map(d => d[1]);
 
             if (chartInstance) chartInstance.destroy();
             chartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: labels.length ? labels : ['Geen data'],
-                    datasets: [{
-                        label: 'Liters Water',
-                        data: levels.length ? levels : [0],
-                        borderColor: '#3b82f6',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        fill: true,
-                        tension: 0.3
-                    }]
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Waterniveau (L)',
+                            data: levels,
+                            borderColor: '#3b82f6',
+                            tension: 0.3,
+                            fill: false
+                        },
+                        {
+                            label: 'Maximum',
+                            data: Array(labels.length).fill(maxLiters),
+                            borderColor: 'rgba(59, 130, 246, 0.3)',
+                            borderDash: [5, 5],
+                            pointRadius: 0,
+                            fill: false
+                        },
+                        {
+                            label: 'Minimum',
+                            data: Array(labels.length).fill(0),
+                            borderColor: 'rgba(239, 68, 68, 0.3)',
+                            borderDash: [5, 5],
+                            pointRadius: 0,
+                            fill: false
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: Math.ceil(maxLiters),
-                            title: { display: true, text: 'Liters' }
-                        }
-                    }
+                    scales: { y: { beginAtZero: true, max: Math.ceil(maxLiters + 10) } }
                 }
             });
         }
@@ -297,4 +354,5 @@
         }
     </script>
 </body>
+
 </html>

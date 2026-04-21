@@ -67,7 +67,7 @@ class Storage:
         history.append([int(time.time()), data.get('water_level', 0.0)])
         
         # Keep only the last 100 entries
-        data['history'] = history[-100:]
+        data['history'] = history
         data['barrel_name'] = barrel_name
         
         if VERCEL_BLOB_TOKEN:
