@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="nl">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,23 +8,40 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
         .water-box {
-            position: relative; width: 80px; height: 150px;
-            border: 2px solid #cbd5e1; border-radius: 8px;
-            overflow: hidden; background-color: #f8fafc; margin: 0 auto;
+            position: relative;
+            width: 80px;
+            height: 150px;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: #f8fafc;
+            margin: 0 auto;
         }
+
         .water-fill {
-            position: absolute; bottom: 0; width: 100%;
-            background-color: #3b82f6; transition: height 0.5s ease;
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background-color: #3b82f6;
+            transition: height 0.5s ease;
         }
+
         .schedule-muted {
             opacity: 0.35;
             filter: grayscale(1);
             pointer-events: none;
         }
+
         .rain-warning {
             border: 1px solid #fbbf24;
             background: #fffbeb;
@@ -31,6 +49,7 @@
         }
     </style>
 </head>
+
 <body class="bg-slate-100 font-sans text-slate-800 pb-12">
 
     <div class="bg-white shadow px-6 py-4 flex flex-wrap justify-between items-center sticky top-0 z-20">
@@ -38,25 +57,27 @@
             <h1 class="text-2xl font-bold text-blue-700">{{ barrel_name }}</h1>
             <p class="text-xs text-slate-500">Laatst bijgewerkt: {{ last_updated_mins }} min. geleden</p>
         </div>
-        
+
         <div class="flex items-center gap-6 mt-4 sm:mt-0">
             <div class="text-center flex flex-col items-center">
                 <span class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Batterij</span>
                 <div class="flex items-center border-2 border-slate-300 rounded-sm p-[2px] gap-[2px] w-12 h-5 relative">
                     <div class="absolute -right-1.5 top-1 h-2 w-1 bg-slate-300 rounded-r-sm"></div>
-                    {% set bat_colors = ['bg-red-500', 'bg-orange-500', 'bg-yellow-400', 'bg-lime-400', 'bg-green-500'] %}
+                    {% set bat_colors = ['bg-red-500', 'bg-orange-500', 'bg-yellow-400', 'bg-lime-400', 'bg-green-500']
+                    %}
                     {% set active_color = bat_colors[data.battery - 1] if data.battery > 0 else 'bg-slate-200' %}
                     {% for i in range(5) %}
-                        <div class="flex-1 h-full rounded-sm {{ active_color if i < data.battery else 'bg-slate-200' }}"></div>
+                    <div class="flex-1 h-full rounded-sm {{ active_color if i < data.battery else 'bg-slate-200' }}">
+                    </div>
                     {% endfor %}
                 </div>
             </div>
-            
+
             <div class="text-center">
                 <span class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Water</span>
                 <span class="text-lg font-bold text-blue-600">{{ data.water_level|round(1) }} L</span>
             </div>
-            
+
             <div class="text-center border-l border-slate-200 pl-6 flex flex-col items-center">
                 <span class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Weer Nu</span>
                 <div class="flex items-center gap-2">
@@ -68,39 +89,49 @@
     </div>
 
     <div class="max-w-7xl mx-auto px-6 mt-6 flex flex-wrap justify-between items-center gap-4">
-        <button onclick="openEditor()" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition font-medium text-sm">
+        <button onclick="openEditor()"
+            class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition font-medium text-sm">
             ⚙️ Schema's Bewerken
         </button>
-        
+
         <label class="flex items-center cursor-pointer space-x-3">
             <span class="text-sm font-medium text-slate-700">Annuleer schema's op regendagen</span>
             <div class="relative">
-                <input type="checkbox" id="rain-toggle" class="sr-only peer" {% if data.cancel_rainy %}checked{% endif %} onchange="renderCarousel()">
-                <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                <input type="checkbox" id="rain-toggle" class="sr-only peer" {% if data.cancel_rainy %}checked{% endif
+                    %} onchange="renderCarousel()">
+                <div
+                    class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
+                </div>
             </div>
         </label>
     </div>
 
     <div class="mt-6 w-full overflow-hidden">
         <div class="flex gap-6 overflow-x-auto no-scrollbar px-6 pb-6 snap-x snap-mandatory" id="carousel">
-            </div>
+        </div>
     </div>
 
-    <div id="graph-modal" class="hidden fixed inset-0 bg-slate-900 bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div id="graph-modal"
+        class="hidden fixed inset-0 bg-slate-900 bg-opacity-50 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-3xl p-6 relative">
-            <button onclick="closeGraph()" class="absolute top-4 right-4 text-slate-500 hover:text-slate-800 text-2xl font-bold">&times;</button>
+            <button onclick="closeGraph()"
+                class="absolute top-4 right-4 text-slate-500 hover:text-slate-800 text-2xl font-bold">&times;</button>
             <h2 class="text-xl font-bold mb-4">Historische Data</h2>
             <canvas id="historyChart" height="100"></canvas>
         </div>
     </div>
 
-    <div id="editor-modal" class="hidden fixed inset-0 bg-slate-900 bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div id="editor-modal"
+        class="hidden fixed inset-0 bg-slate-900 bg-opacity-50 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl p-6 relative max-h-[90vh] flex flex-col">
-            <button onclick="closeEditor()" class="absolute top-4 right-4 text-slate-500 hover:text-slate-800 text-2xl font-bold">&times;</button>
+            <button onclick="closeEditor()"
+                class="absolute top-4 right-4 text-slate-500 hover:text-slate-800 text-2xl font-bold">&times;</button>
             <h2 class="text-xl font-bold mb-4 text-blue-700">Schema's Bewerken</h2>
             <div class="flex gap-4 mb-4 border-b">
-                <button id="tab-today" onclick="switchTab('today')" class="pb-2 font-bold text-blue-600 border-b-2 border-blue-600">Vandaag</button>
-                <button id="tab-tomorrow" onclick="switchTab('tomorrow')" class="pb-2 font-bold text-slate-500">Morgen</button>
+                <button id="tab-today" onclick="switchTab('today')"
+                    class="pb-2 font-bold text-blue-600 border-b-2 border-blue-600">Vandaag</button>
+                <button id="tab-tomorrow" onclick="switchTab('tomorrow')"
+                    class="pb-2 font-bold text-slate-500">Morgen</button>
             </div>
             <div class="overflow-y-auto flex-grow pr-2" id="schedule-container">
                 <div id="list-today" class="space-y-2">
@@ -108,11 +139,11 @@
                     <div class="flex items-center justify-between bg-slate-50 p-2 rounded border">
                         <span class="font-mono font-bold text-slate-700">{{ timeslots[i] }}</span>
                         <select class="schedule-select-today border rounded p-1 bg-white text-sm" data-index="{{ i }}">
-                            <option value="-" {% if data.today_schedule[i] == '-' %}selected{% endif %}>Uit</option>
-                            <option value="1" {% if data.today_schedule[i] == '1' %}selected{% endif %}>Sip</option>
-                            <option value="2" {% if data.today_schedule[i] == '2' %}selected{% endif %}>Rustig</option>
-                            <option value="3" {% if data.today_schedule[i] == '3' %}selected{% endif %}>Zwaar</option>
-                            <option value="f" {% if data.today_schedule[i] == 'f' %}selected{% endif %}>Vloed</option>
+                            <option value="-" {% if data.today_schedule[i]=='-' %}selected{% endif %}>Uit</option>
+                            <option value="1" {% if data.today_schedule[i]=='1' %}selected{% endif %}>Sip</option>
+                            <option value="2" {% if data.today_schedule[i]=='2' %}selected{% endif %}>Rustig</option>
+                            <option value="3" {% if data.today_schedule[i]=='3' %}selected{% endif %}>Zwaar</option>
+                            <option value="f" {% if data.today_schedule[i]=='f' %}selected{% endif %}>Vloed</option>
                         </select>
                     </div>
                     {% endfor %}
@@ -121,39 +152,45 @@
                     {% for i in range(48) %}
                     <div class="flex items-center justify-between bg-slate-50 p-2 rounded border">
                         <span class="font-mono font-bold text-slate-700">{{ timeslots[i] }}</span>
-                        <select class="schedule-select-tomorrow border rounded p-1 bg-white text-sm" data-index="{{ i }}">
-                            <option value="-" {% if data.tomorrow_schedule[i] == '-' %}selected{% endif %}>Uit</option>
-                            <option value="1" {% if data.tomorrow_schedule[i] == '1' %}selected{% endif %}>Sip</option>
-                            <option value="2" {% if data.tomorrow_schedule[i] == '2' %}selected{% endif %}>Rustig</option>
-                            <option value="3" {% if data.tomorrow_schedule[i] == '3' %}selected{% endif %}>Zwaar</option>
-                            <option value="f" {% if data.tomorrow_schedule[i] == 'f' %}selected{% endif %}>Vloed</option>
+                        <select class="schedule-select-tomorrow border rounded p-1 bg-white text-sm"
+                            data-index="{{ i }}">
+                            <option value="-" {% if data.tomorrow_schedule[i]=='-' %}selected{% endif %}>Uit</option>
+                            <option value="1" {% if data.tomorrow_schedule[i]=='1' %}selected{% endif %}>Sip</option>
+                            <option value="2" {% if data.tomorrow_schedule[i]=='2' %}selected{% endif %}>Rustig</option>
+                            <option value="3" {% if data.tomorrow_schedule[i]=='3' %}selected{% endif %}>Zwaar</option>
+                            <option value="f" {% if data.tomorrow_schedule[i]=='f' %}selected{% endif %}>Vloed</option>
                         </select>
                     </div>
                     {% endfor %}
                 </div>
             </div>
             <div class="pt-4 mt-4 border-t flex justify-end gap-3">
-                <button onclick="closeEditor()" class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded">Annuleren</button>
-                <button onclick="saveSchedule()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-bold">Opslaan</button>
+                <button onclick="closeEditor()"
+                    class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded">Annuleren</button>
+                <button onclick="saveSchedule()"
+                    class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-bold">Opslaan</button>
             </div>
         </div>
     </div>
 
     <script>
-        let dailyWeather = {}; 
+        let dailyWeather = {};
         const maxLiters = {{ data.max_liters }};
         const currentWaterLiters = {{ data.water_level }};
         const days = ['Zondag', 'Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag'];
 
         // --- WEER DATA OPHALEN ---
-        fetch('https://api.open-meteo.com/v1/forecast?latitude=50.93&longitude=5.42&daily=weathercode,temperature_2m_max&current_weather=true&timezone=auto')
+        const LAT = 50.9094;
+        const LON = 5.4179;
+
+        // --- WEER DATA OPHALEN WITH CORRECT COORDS ---
+        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&daily=weathercode,temperature_2m_max&current_weather=true&timezone=auto`)
             .then(res => res.json())
             .then(wData => {
                 const cur = wData.current_weather;
                 document.getElementById('weather-temp').innerText = `${cur.temperature}°C`;
                 document.getElementById('weather-icon').innerText = getWeatherIcon(cur.weathercode);
-                
-                // Sla voorspelling op per datum
+
                 wData.daily.time.forEach((dateStr, index) => {
                     dailyWeather[dateStr] = {
                         code: wData.daily.weathercode[index],
@@ -161,8 +198,7 @@
                     };
                 });
                 renderCarousel();
-            })
-            .catch(() => { document.getElementById('weather-temp').innerText = 'Fout'; });
+            });
 
         function getWeatherIcon(code) {
             if (code >= 1 && code <= 3) return '🌤️';
@@ -180,16 +216,16 @@
             carousel.innerHTML = '';
 
             for (let i = 0; i < 7; i++) {
-                let dateOffset = i - 3; 
+                let dateOffset = i - 3;
                 let date = new Date();
                 date.setDate(date.getDate() + dateOffset);
                 let dateKey = date.toISOString().split('T')[0];
                 let dayName = dateOffset === 0 ? "Vandaag" : days[date.getDay()];
-                
+
                 const isFuture = dateOffset > 0;
                 const weather = dailyWeather[dateKey] || { isRainy: false, code: 0 };
                 const shouldMute = cancelOnRain && weather.isRainy;
-                
+
                 // Simuleer ontbrekende data voor verleden (80% kans op data)
                 let hasData = !isFuture && (dateOffset === 0 || Math.random() > 0.2);
                 let displayLiters = dateOffset === 0 ? currentWaterLiters : Math.floor(Math.random() * maxLiters);
@@ -251,11 +287,11 @@
                 `;
                 carousel.innerHTML += cardHtml;
             }
-            
+
             // Focus op vandaag
             setTimeout(() => {
                 const centerCard = carousel.children[3];
-                if(centerCard) centerCard.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                if (centerCard) centerCard.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
             }, 100);
         }
 
@@ -277,7 +313,7 @@
         function closeGraph() { document.getElementById('graph-modal').classList.add('hidden'); }
         function openEditor() { document.getElementById('editor-modal').classList.remove('hidden'); }
         function closeEditor() { document.getElementById('editor-modal').classList.add('hidden'); }
-        
+
         function switchTab(tab) {
             const isToday = tab === 'today';
             document.getElementById('tab-today').className = isToday ? "pb-2 font-bold text-blue-600 border-b-2 border-blue-600" : "pb-2 font-bold text-slate-500";
@@ -307,4 +343,5 @@
         }
     </script>
 </body>
+
 </html>
