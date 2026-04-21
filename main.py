@@ -12,6 +12,25 @@ GMT_OFFSET = 7200  # GMT+2 in seconds
 def get_now_gmt2():
     return int(time.time() + GMT_OFFSET)
 
+@app.route('/setup', methods=['GET'])
+def setup_page():
+    return render_template('setup.html')
+
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    error = None
+    if request.method == 'POST':
+        barrel_name = request.form.get('barrel_name', '').strip()
+        if barrel_name:
+            data = Storage.get_data(barrel_name)
+            if data:
+                return redirect(url_for('dashboard', barrel_name=barrel_name))
+            else:
+                error = f"Geen ton gevonden met de naam '{barrel_name}'. Controleer de spelling of verbind je ton eerst."
+        else:
+            error = "Vul a.u.b. een naam in."
+    return render_template('index.html', error=error)
+
 @app.route('/dashboard/<barrel_name>')
 def dashboard(barrel_name):
     data = Storage.get_data(barrel_name)
@@ -100,3 +119,26 @@ def update_status():
 
     except Exception as e:
         return f"error: {str(e)}", 400
+    
+@app.route('/api/schedule', methods=['POST'])
+def save_schedule():
+    web_data = request.json
+    barrel_name = web_data.get('barrel_name')
+    server_data = Storage.get_data(barrel_name)
+
+    if not server_data:
+        return jsonify({"status": "error", "message": "Ton niet gevonden"}), 404
+
+    # Alleen versie ophogen als de string echt anders is
+    if server_data['today_schedule'] != web_data['today_schedule']:
+        server_data['today_schedule'] = web_data['today_schedule']
+        server_data['today_version'] += 1
+
+    if server_data['tomorrow_schedule'] != web_data['tomorrow_schedule']:
+        server_data['tomorrow_schedule'] = web_data['tomorrow_schedule']
+        server_data['tomorrow_version'] += 1
+
+    server_data['cancel_rainy'] = web_data.get('cancel_rainy', False)
+    
+    Storage.save_data(barrel_name, server_data)
+    return jsonify({"status": "success"})
