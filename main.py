@@ -70,6 +70,10 @@ class Storage:
 
 # --- ROUTES ---
 
+@app.route('/setup', methods=['GET'])
+def setup_page():
+    return render_template('setup.html')
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     error = None
