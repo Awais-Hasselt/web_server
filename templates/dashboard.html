@@ -175,8 +175,14 @@
 
     <script>
         let dailyWeather = {};
-        const maxLiters = {{ data.max_liters }};
-        const currentWaterLiters = {{ data.water_level }};
+        const barrelRadius = 25.0;
+        const barrelHeight = 90.0;
+        // Calculate max capacity based on firmware dimensions (~176.7L)
+        const maxLiters = (Math.PI * Math.pow(barrelRadius, 2) * barrelHeight) / 1000.0;
+
+        // Get actual data from Flask
+        const currentWaterLiters = {{ data.water_level| tojson }};
+        const historyData = {{ data.history|default ([]) | tojson }};
         const days = ['Zondag', 'Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag'];
 
         // --- WEER DATA OPHALEN ---
@@ -226,88 +232,90 @@
                 const weather = dailyWeather[dateKey] || { isRainy: false, code: 0 };
                 const shouldMute = cancelOnRain && weather.isRainy;
 
-                // Simuleer ontbrekende data voor verleden (80% kans op data)
-                let hasData = !isFuture && (dateOffset === 0 || Math.random() > 0.2);
-                let displayLiters = dateOffset === 0 ? currentWaterLiters : Math.floor(Math.random() * maxLiters);
+                // REAL DATA LOGIC: 
+                // Only show the water level for "Today". 
+                // (You could expand this to show history for past days)
+                let displayLiters = dateOffset === 0 ? currentWaterLiters : 0;
                 let percentFill = (displayLiters / maxLiters) * 100;
+                if (percentFill > 100) percentFill = 100;
 
                 let cardHtml = `
-                    <div class="snap-center shrink-0 w-80 bg-white rounded-xl shadow-md border border-slate-100 p-5 flex flex-col ${dateOffset === 0 ? 'ring-2 ring-blue-500' : ''}">
-                        <div class="flex justify-between items-center mb-4">
-                            <div>
-                                <h3 class="font-bold text-lg text-slate-800">${dayName}</h3>
-                                <p class="text-[10px] text-slate-400 uppercase">${date.toLocaleDateString('nl-NL')}</p>
-                            </div>
-                            <div class="text-xl">${getWeatherIcon(weather.code)}</div>
+                <div class="snap-center shrink-0 w-80 bg-white rounded-xl shadow-md border border-slate-100 p-5 flex flex-col ${dateOffset === 0 ? 'ring-2 ring-blue-500' : ''}">
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <h3 class="font-bold text-lg text-slate-800">${dayName}</h3>
+                            <p class="text-[10px] text-slate-400 uppercase">${date.toLocaleDateString('nl-NL')}</p>
+                        </div>
+                        <div class="text-xl">${getWeatherIcon(weather.code)}</div>
+                    </div>
+                    
+                    <div class="flex gap-4">
+                        <div class="flex-shrink-0 w-24">
+                            ${(dateOffset === 0) ? `
+                                <div class="water-box">
+                                    <div class="water-fill" style="height: ${percentFill}%;"></div>
+                                </div>
+                                <p class="text-center text-xs mt-2 font-bold text-blue-700">${displayLiters.toFixed(1)} L</p>
+                            ` : `
+                                <div class="water-box flex items-center justify-center bg-slate-100">
+                                    <span class="text-[10px] text-slate-400 text-center px-1">${isFuture ? 'Data volgt' : 'Geen data'}</span>
+                                </div>
+                            `}
                         </div>
                         
-                        <div class="flex gap-4">
-                            <div class="flex-shrink-0 w-24">
-                                ${isFuture ? `
-                                    <div class="water-box flex items-center justify-center border-dashed bg-slate-50">
-                                        <span class="text-[10px] text-slate-400 text-center px-1 italic">Data volgt...</span>
-                                    </div>
-                                ` : hasData ? `
-                                    <div class="water-box">
-                                        <div class="water-fill" style="height: ${percentFill}%;"></div>
-                                    </div>
-                                    <p class="text-center text-xs mt-2 font-bold text-blue-700">${displayLiters.toFixed(1)} L</p>
-                                ` : `
-                                    <div class="water-box flex items-center justify-center bg-slate-100">
-                                        <span class="text-[10px] text-slate-400 text-center px-1">Geen meting</span>
-                                    </div>
-                                `}
-                            </div>
-                            
-                            <div class="flex-grow flex flex-col gap-2">
-                                <div class="text-xs font-semibold text-slate-400 uppercase border-b pb-1">Schema</div>
-                                
-                                <div class="${shouldMute ? 'schedule-muted' : ''} space-y-2">
-                                    <div class="bg-blue-50 p-2 rounded text-xs border border-blue-100">
-                                        <div class="font-bold text-blue-800">08:00 - Sip</div>
-                                    </div>
+                        <div class="flex-grow flex flex-col gap-2">
+                            <div class="text-xs font-semibold text-slate-400 uppercase border-b pb-1">Schema</div>
+                            <div class="${shouldMute ? 'schedule-muted' : ''} space-y-2">
+                                <div class="bg-blue-50 p-2 rounded text-xs border border-blue-100">
+                                    <div class="font-bold text-blue-800">Geen actieve taken</div>
                                 </div>
-
-                                ${shouldMute ? `
-                                    <div class="rain-warning p-2 rounded text-[10px] font-medium flex items-center gap-1">
-                                        <span>🌧️</span> Wegens regen geannuleerd
-                                    </div>
-                                ` : ''}
-
-                                ${!isFuture ? `
-                                    <button onclick="openGraph()" class="mt-auto bg-slate-100 hover:bg-slate-200 text-slate-700 py-1.5 rounded text-sm font-medium transition">
-                                        Bekijk Historiek
-                                    </button>
-                                ` : `
-                                    <div class="mt-auto py-2 text-center text-[10px] text-slate-300 italic border-t border-slate-50">Geen historie</div>
-                                `}
                             </div>
+                            ${dateOffset === 0 ? `
+                                <button onclick="openGraph()" class="mt-auto bg-slate-100 hover:bg-slate-200 text-slate-700 py-1.5 rounded text-sm font-medium transition">
+                                    Bekijk Historiek
+                                </button>
+                            ` : ''}
                         </div>
                     </div>
-                `;
+                </div>
+            `;
                 carousel.innerHTML += cardHtml;
             }
-
-            // Focus op vandaag
-            setTimeout(() => {
-                const centerCard = carousel.children[3];
-                if (centerCard) centerCard.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-            }, 100);
         }
-
         // --- HELPERS & MODALS ---
         let chartInstance = null;
         function openGraph() {
             document.getElementById('graph-modal').classList.remove('hidden');
             const ctx = document.getElementById('historyChart').getContext('2d');
+
+            // Map history [timestamp, level] to Chart.js format
+            const labels = historyData.map(d => new Date(d[0] * 1000).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' }));
+            const levels = historyData.map(d => d[1]);
+
             if (chartInstance) chartInstance.destroy();
             chartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: ['00:00', '08:00', '16:00', '23:59'],
-                    datasets: [{ label: 'Liters', data: [150, 140, 110, 105], borderColor: '#3b82f6', fill: true }]
+                    labels: labels.length ? labels : ['Geen data'],
+                    datasets: [{
+                        label: 'Liters Water',
+                        data: levels.length ? levels : [0],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }]
                 },
-                options: { responsive: true }
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: Math.ceil(maxLiters),
+                            title: { display: true, text: 'Liters' }
+                        }
+                    }
+                }
             });
         }
         function closeGraph() { document.getElementById('graph-modal').classList.add('hidden'); }

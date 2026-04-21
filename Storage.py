@@ -2,6 +2,7 @@ import hashlib
 import requests
 import os
 import json
+import time
 VERCEL_BLOB_TOKEN = os.environ.get('BLOB_READ_WRITE_TOKEN')
 
 
@@ -49,6 +50,17 @@ class Storage:
     @classmethod
     def save_data(cls, barrel_name, data):
         filename = cls.get_filename(barrel_name)
+        
+        # Load existing data to preserve history
+        existing = cls.get_data(barrel_name) or {}
+        history = existing.get('history', [])
+        
+        # Add new point: [timestamp, liters]
+        # We use int(time.time()) for the X-axis of the graph
+        history.append([int(time.time()), data['water_level']])
+        
+        # Keep only the last 100 entries to prevent the file from growing forever
+        data['history'] = history[-100:]
         data['barrel_name'] = barrel_name
         
         if VERCEL_BLOB_TOKEN:

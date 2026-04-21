@@ -18,19 +18,20 @@ def dashboard(barrel_name):
     if not data:
         return redirect(url_for('index'))
     
-    # Logic: Seconds if < 60s, else Minutes
+    # Ensure physical constants are available to the template
+    # These match your firmware: Height 90cm, Radius 25cm
+    data['max_height'] = 90.0 
+    
+    # Format the last updated string
     diff = int(time.time() - data['last_updated'])
-    if diff < 60:
-        last_updated_str = f"{diff} sec."
-    else:
-        last_updated_str = f"{diff // 60} min."
-        
+    last_updated_str = f"{diff} sec." if diff < 60 else f"{diff // 60} min."
+    
     timeslots = [f"{str(h).zfill(2)}:{str(m).zfill(2)}" for h in range(24) for m in (0, 30)]
     
     return render_template('dashboard.html', 
                          data=data, 
                          barrel_name=barrel_name, 
-                         last_updated_mins=last_updated_str, # Passing the formatted string
+                         last_updated_mins=last_updated_str,
                          timeslots=timeslots)
 
 @app.route('/api/status', methods=['POST'])
