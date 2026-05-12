@@ -12,23 +12,88 @@
   <style>
     html, body {
       overflow-x: hidden;
-      background: #f6f3ed;
+      background: #f4f5f7;
+      font-family: Inter, system-ui, sans-serif;
+    }
+
+    * {
+      -webkit-tap-highlight-color: transparent;
     }
 
     .glass {
-      backdrop-filter: blur(10px);
+      backdrop-filter: blur(12px);
     }
 
     .scrollbar-hide::-webkit-scrollbar {
       display: none;
     }
 
-    .schedule-pill {
-      transition: all 0.2s ease;
+    .fade-in {
+      animation: fade .25s ease;
     }
 
-    .schedule-pill:hover {
-      transform: translateY(-1px);
+    .slide-up {
+      animation: slide .25s ease;
+    }
+
+    @keyframes fade {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slide {
+      from {
+        transform: translateY(8px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .card-hover {
+      transition: all .2s ease;
+    }
+
+    .card-hover:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 24px rgba(0,0,0,.06);
+    }
+  </style>ion: fade .25s ease;
+    }
+
+    .slide-up {
+      animation: slide .25s ease;
+    }
+
+    @keyframes fade {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes slide {
+      from {
+        transform: translateY(8px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .card-hover {
+      transition: all .2s ease;
+    }
+
+    .card-hover:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 24px rgba(0,0,0,.06);
     }
   </style>
 </head>
@@ -36,12 +101,12 @@
 
 <div class="min-h-screen flex flex-col">
 
-  <header class="sticky top-0 z-40 bg-emerald-900 text-white shadow-xl">
-    <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col lg:flex-row gap-4 justify-between">
+  <header class="sticky top-0 z-40 bg-emerald-900/95 backdrop-blur text-white shadow-lg border-b border-white/10">
+    <div class="max-w-7xl mx-auto px-3 py-3 flex flex-col lg:flex-row gap-3 justify-between">
 
       <div>
-        <h1 class="text-3xl font-light tracking-tight">{{ barrel_name }}</h1>
-        <div class="text-sm text-emerald-100 mt-1" id="last-updated">
+        <h1 class="text-2xl font-semibold tracking-tight">{{ barrel_name }}</h1>
+        <div class=" text-emerald-100 mt-1" id="last-updated">
           Laatste update: {{ last_updated_mins }}
         </div>
       </div>
@@ -60,7 +125,7 @@
 
         <div class="bg-white/10 rounded-2xl px-4 py-3 min-w-[120px] glass">
           <div class="text-xs uppercase tracking-wider opacity-70">Status</div>
-          <div class="text-lg font-semibold">🟢 Online</div>
+          <div class="text-lgemibold">🟢 Online</div>
         </div>
 
       </div>
@@ -68,11 +133,11 @@
     </div>
   </header>
 
-  <main class="flex-1 w-full max-w-7xl mx-auto p-4 lg:p-6 grid grid-cols-1 xl:grid-cols-[320px_minmax(0,1fr)] gap-6 overflow-x-hidden">
+  <main class="flegrid-cols-[320px_minmax(0,1fr)]  overflow-x-hidden">
 
-    <aside class="flex flex-col gap-5 min-w-0">
+    <aside class="flex flex-col ga mi">
 
-      <div class="bg-white rounded-3xl p-6 shadow-sm border border-stone-200">
+      <div class="bg-white rounded-2xl p-6 shadow-sm border border-stone-200">
 
         <div class="text-xs uppercase tracking-wider text-stone-500 mb-4">
           Reservoir
@@ -83,19 +148,19 @@
         </div>
 
         <div class="text-center mt-5">
-          <div class="text-4xl font-light text-sky-700" id="water-main">--</div>
-          <div class="text-sm text-stone-500 mt-1" id="water-sub"></div>
+          <div class="text-4xl font-light text-sky-"water-main">--</div>
+          <div class="text-sm text-stone-5" id="water-sub"></div>
         </div>
 
       </div>
 
-      <div class="bg-white rounded-3xl p-5 shadow-sm border border-stone-200">
+      <div class="bg-white rounded-2xl p-5adow-sm border border-stone-200">
         <div class="flex justify-between items-center gap-4">
 
           <div>
             <div class="font-semibold">Pauzeer bij regen</div>
             <div class="text-sm text-stone-500 mt-1">
-              Schema's automatisch overslaan bij zware regen.
+       Schema's automatisch overslaan bij zware regen.
             </div>
           </div>
 
@@ -107,7 +172,7 @@
         </div>
       </div>
 
-      <div class="bg-white rounded-3xl p-5 shadow-sm border border-stone-200">
+      <div class="bg-white rounded-2xl p-5 shw-sm border border-stone-200">
 
         <div class="text-xs uppercase tracking-wider text-stone-500 mb-4">
           Slimme inzichten
@@ -115,21 +180,13 @@
 
         <div class="space-y-3">
           <div id="weather-tip" class="rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 p-4 text-sm"></div>
-          <div id="usage-tip" class="rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 p-4 text-sm"></div>
-        </div>
-
-      </div>
-
-    </aside>
-
-    <section class="min-w-0 flex flex-col gap-6 overflow-hidden">
-
-      <div>
-        <div class="flex justify-between items-center gap-4 mb-4 flex-wrap">
+          <div id="usagelass="rounded-2xl bg-emerald-50 border border-emerald-<div class="overflow-x-auto scrollbar-hide pb-2 -mx-1 px-1">
+          <div id="calendar" class="flex gap-3 min-w-max"></div>
+        </div>ion class="min-w-0 fl<div class="bg-white rounded-2xl p-4 shadow-sm border border-stone-200 overflow-hidden card-hover">gap-4 mb-4 flex-wrap">
           <div>
-            <h2 class="text-3xl font-light">Kalender</h2>
+            <h2 class="text-2xl font-semibold">Kalender</h2>
             <div class="text-sm text-stone-500 mt-1">
-              Live data, schema's en historiek
+              Live data, schema'storiek
             </div>
           </div>
         </div>
@@ -137,12 +194,10 @@
         <div id="calendar" class="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-7 gap-4"></div>
       </div>
 
-      <div class="bg-white rounded-3xl p-5 lg:p-6 shadow-sm border border-stone-200 overflow-hidden">
-
-        <div class="flex justify-between items-start gap-4 flex-wrap mb-6">
+      <div class="bg-white rounded-2xl p-5 letween items-start gap-4 flex-wrap mb-6">
 
           <div>
-            <h3 class="text-3xl font-light" id="detail-title">Vandaag</h3>
+            <h3 class="text-2xl font-semibold" id="detail-title">Vandaag</h3>
             <div class="text-stone-500 mt-1" id="detail-subtitle"></div>
           </div>
 
@@ -162,11 +217,7 @@
 
         <div id="graph-section" class="mt-8 hidden">
           <div class="mb-3">
-            <div class="font-semibold">Historische grafiek</div>
-            <div class="text-sm text-stone-500">Waterniveau gedurende de dag</div>
-          </div>
-
-          <div class="bg-stone-50 border border-stone-200 rounded-2xl p-4 overflow-hidden">
+            <div class="font-semibo<div id="task-modal" class="fixed inset-0 bg-black/40 backdrop-blur-sm hidden items-center justify-center z-50 p-4 fade-in"> de<div class="bg-white rounded-2xl p-4 w-full max-w-sm shadow-2xl slide-up">rder-stone-200 rounded-2xl p-4 overflow-hidden">
             <canvas id="history-chart" height="110"></canvas>
           </div>
         </div>
@@ -180,7 +231,7 @@
 </div>
 
 <div id="task-modal" class="fixed inset-0 bg-black/40 hidden items-center justify-center z-50 p-4">
-  <div class="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl">
+  <div class="bg-white rounded-2xl p-6 w-l max-w-md shadow-2xl">
 
     <div class="flex justify-between items-center mb-5">
       <h3 class="text-2xl font-light">Nieuwe taak</h3>
@@ -191,13 +242,13 @@
 
       <div>
         <label class="text-sm text-stone-600">Starttijd</label>
-        <input id="task-time" type="time" class="w-full mt-1 rounded-2xl border border-stone-300 p-3">
+        <input id="task-time" type="time" c-full mt-1 rounded-2xl border border-stone-300 p-3">
       </div>
 
       <div>
         <label class="text-sm text-stone-600">Type irrigatie</label>
 
-        <select id="task-type" class="w-full mt-1 rounded-2xl border border-stone-300 p-3">
+        <select id="task-type" class="w-fullounded-2xl border border-stone-300 p-3">
           <option value="1">Sip</option>
           <option value="2">Rustig</option>
           <option value="3">Zwaar</option>
@@ -208,7 +259,7 @@
       <div>
         <label class="text-sm text-stone-600">Duur</label>
 
-        <select id="task-duration" class="w-full mt-1 rounded-2xl border border-stone-300 p-3">
+        <select id="task-duration" class="w-full mt-1 roundedrder border-stone-300 p-3">
           <option value="1">30 min</option>
           <option value="2">1 uur</option>
           <option value="4">2 uur</option>
@@ -218,7 +269,7 @@
       <div>
         <label class="text-sm text-stone-600">Herhaling</label>
 
-        <select id="task-repeat" class="w-full mt-1 rounded-2xl border border-stone-300 p-3">
+        <select id="task-repeat" class="w-full mt-1 rounded-2xl border-stone-300 p-3">
           <option value="none">Geen</option>
           <option value="daily">Dagelijks</option>
         </select>
@@ -339,7 +390,7 @@ function renderCalendar() {
       weatherHtml = `
         <div class="mt-3 text-sm text-stone-600 flex items-center gap-2">
           <span>${getWeatherIcon(weather.code)}</span>
-          <span>${weather.temp}°C</span>
+         ${weather.temp}°C</span>
           <span>· ${weather.rain}%</span>
         </div>
       `;
@@ -358,37 +409,31 @@ function renderCalendar() {
       }
     }
 
-    const schedule = offset === 0
-      ? todaySchedule
-      : offset === 1
+    const scheduleclass="fade-in slide-up card-hover text-left rounded-2xl bg-white border: offset === 1
       ? tomorrowSchedule
       : null;
 
     const active = [];
 
-    if (schedule) {
-      schedule.forEach((v,i) => {
-        if (v !== '-') {
-          active.push(i);
+    if (schedule) {p-4 shadow-sm transition min-w-[220px] max-w-[220px] overflow-hidden flex-shrink-0      active.push(i);
         }
       });
     }
 
     el.innerHTML += `
-      <button onclick="selectDay(${offset})" class="text-left rounded-3xl bg-white border ${selectedOffset === offset ? 'border-emerald-700 ring-2 ring-emerald-100' : 'border-stone-200'} p-5 shadow-sm hover:shadow-md transition min-w-0 overflow-hidden">
+      <button onclick="selectDay(${offset})" class="text-left rounded-2xl bg-white border ${selectedOffset === offset ? 'border-emerald-700 ring-2 ring-emerald-100' : 'border-stone-200'} p-5 shadow-sm hover:sow-md transition min-w-0 overflow-hidden">
 
         <div class="flex justify-between gap-3 items-start">
-          <div>
-            <div class="font-semibold text-lg">
+      t-lg">
               ${offset === 0 ? 'Vandaag' : DAYS[d.getDay()]}
             </div>
 
-            <div class="text-sm text-stone-500 mt-1">
+            <div class="text-sm text-stont-1">
               ${d.toLocaleDateString('nl-BE')}
             </div>
           </div>
 
-          ${offset >= 0 && weather ? `<div class="text-2xl">${getWeatherIcon(weather.code)}</div>` : ''}
+         et >= 0 && weather ? `<div class="text-2xl">${getWeatherIcon(weather.code)}</div>` : ''}
 
         </div>
 
@@ -408,7 +453,7 @@ function renderCalendar() {
               `).join('')
             : '<div class="text-sm text-stone-400">Geen taken</div>'}
 
-          ${active.length > 4 ? `<div class="text-xs text-stone-500 self-center">+${active.length - 4}</div>` : ''}
+          ${active.length > 4 ? `<div class="text-xs text-stone-500 self-center">+${acngth - 4}</div>` : ''}
         </div>
 
       </button>
@@ -480,9 +525,7 @@ function renderTasks() {
     const tasks = scheduleToTasks(schedule);
 
     list.innerHTML = tasks.length
-      ? tasks.map((t, idx) => {
-
-          const start = `${String(Math.floor(t.start/2)).padStart(2,'0')}:${t.start%2===0?'00':'30'}`;
+      ? tasks.map(<div class="fade-in rounded-xl border border-stone-200 p-3 flex justify-between gap-3 items-center flex-wrap hover:border-emerald-300 transition">0?'00':'30'}`;
           const end = `${String(Math.floor(t.end/2)).padStart(2,'0')}:${t.end%2===0?'00':'30'}`;
 
           return `
@@ -493,12 +536,12 @@ function renderTasks() {
                   ${['','Sip','Rustig','Zwaar'][t.type] || 'Vloed'} irrigatie
                 </div>
 
-                <div class="text-sm text-stone-500 mt-1">
+                <div class="text-sm text-st mt-1">
                   ${start} → ${end}
                 </div>
               </div>
 
-              <button onclick="deleteTask(${idx})" class="px-4 py-2 rounded-xl bg-red-50 text-red-700 font-semibold">
+              <button onclleteTask(${idx})" class="px-4 py-2 rounded-xl bg-red-50 text-red-700 font-semibold">
                 Verwijder
               </button>
 
