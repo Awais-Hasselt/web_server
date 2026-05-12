@@ -44,7 +44,7 @@ def dashboard(barrel_name):
     
     timeslots = [f"{str(h).zfill(2)}:{str(m).zfill(2)}" for h in range(24) for m in (0, 30)]
     
-    return render_template('dashboard.html', 
+    return render_template('dashboard_new.html', 
                          data=data, 
                          barrel_name=barrel_name, 
                          last_updated_mins=last_updated_str,
