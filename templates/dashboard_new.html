@@ -1,4 +1,941 @@
 <!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ barrel_name }} Dashboard</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@300;500&family=DM+Sans:wght@300;400;500;700&display=swap');
+
+    :root {
+      --bg: #f4efe7;
+      --card: #ffffff;
+      --muted: #8a7b69;
+      --border: #ddd2c1;
+      --green: #2d5a3d;
+      --green2: #4a7a5b;
+      --blue: #4a8db5;
+      --blue-light: #dfeef8;
+      --danger: #c45d5d;
+      --warn: #d49a37;
+      --text: #2b241d;
+      --shadow: 0 10px 30px rgba(0,0,0,0.06);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      background: var(--green);
+      color: white;
+      padding: 18px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      box-shadow: var(--shadow);
+    }
+
+    .barrel-name {
+      font-family: 'Fraunces', serif;
+      font-size: 28px;
+      font-weight: 300;
+    }
+
+    .last-sync {
+      margin-top: 4px;
+      opacity: 0.75;
+      font-size: 13px;
+    }
+
+    .status-row {
+      display: flex;
+      gap: 18px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .status-card {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 14px;
+      padding: 10px 14px;
+      min-width: 110px;
+      backdrop-filter: blur(6px);
+    }
+
+    .status-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      opacity: 0.7;
+      margin-bottom: 4px;
+    }
+
+    .status-value {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .battery-bar {
+      display: flex;
+      gap: 3px;
+      margin-top: 6px;
+    }
+
+    .battery-seg {
+      width: 10px;
+      height: 14px;
+      border-radius: 3px;
+      background: rgba(255,255,255,0.15);
+    }
+
+    .battery-seg.on {
+      background: #8fe6aa;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 22px;
+      padding: 22px;
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .panel {
+      background: var(--card);
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .panel-title {
+      font-size: 11px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 14px;
+      font-weight: 700;
+    }
+
+    .tank {
+      width: 100px;
+      height: 180px;
+      margin: 10px auto;
+      border-radius: 12px;
+      border: 3px solid #d7c9b8;
+      overflow: hidden;
+      position: relative;
+      background: #f4fbff;
+    }
+
+    .tank-fill {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      background: linear-gradient(to top, #3c89b4, #7fc4e7);
+      transition: height 0.7s ease;
+    }
+
+    .tank-value {
+      text-align: center;
+      font-size: 32px;
+      font-family: 'Fraunces', serif;
+      color: var(--blue);
+      margin-top: 12px;
+    }
+
+    .tank-sub {
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    .alert {
+      border-radius: 14px;
+      padding: 12px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .alert.good {
+      background: #e6f5ea;
+      color: #2e6841;
+      border: 1px solid #c3e0cb;
+    }
+
+    .alert.warn {
+      background: #fff2de;
+      color: #9b6314;
+      border: 1px solid #efd0a0;
+    }
+
+    .alert.danger {
+      background: #fde8e8;
+      color: #9e2d2d;
+      border: 1px solid #f0b5b5;
+    }
+
+    .toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .switch {
+      position: relative;
+      width: 52px;
+      height: 28px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      inset: 0;
+      background: #c7b8a7;
+      border-radius: 999px;
+      transition: 0.2s;
+    }
+
+    .slider::before {
+      content: '';
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: white;
+      top: 3px;
+      left: 3px;
+      transition: 0.2s;
+    }
+
+    input:checked + .slider {
+      background: var(--green2);
+    }
+
+    input:checked + .slider::before {
+      transform: translateX(24px);
+    }
+
+    .content {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .week-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(180px, 1fr));
+      gap: 14px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .day-card {
+      background: white;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      padding: 14px;
+      min-width: 180px;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .day-card:hover {
+      transform: translateY(-3px);
+    }
+
+    .day-card.active {
+      border: 2px solid var(--green);
+    }
+
+    .day-card.rain-muted {
+      opacity: 0.55;
+    }
+
+    .day-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+
+    .day-name {
+      font-weight: 700;
+      font-size: 16px;
+    }
+
+    .day-date {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .weather-icon {
+      font-size: 22px;
+    }
+
+    .day-water {
+      background: var(--blue-light);
+      border-radius: 12px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+
+    .day-water-val {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--blue);
+    }
+
+    .schedule-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 10px;
+    }
+
+    .slot-chip {
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .slot-1 { background: #dff3e6; color: #286444; }
+    .slot-2 { background: #dcecf7; color: #275a79; }
+    .slot-3 { background: #ffecd2; color: #9a6213; }
+    .slot-f { background: #eddcf7; color: #6f3d8d; }
+
+    .graph-btn {
+      width: 100%;
+      margin-top: 12px;
+      border: none;
+      border-radius: 12px;
+      background: #f2f2f2;
+      padding: 10px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .detail-panel {
+      background: white;
+      border-radius: 22px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      padding: 20px;
+    }
+
+    .detail-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .detail-title {
+      font-family: 'Fraunces', serif;
+      font-size: 28px;
+      font-weight: 300;
+    }
+
+    .timeline-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .time-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 8px 10px;
+      background: #faf8f5;
+    }
+
+    .time-label {
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .time-select {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 6px;
+      background: white;
+    }
+
+    .actions {
+      margin-top: 20px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 18px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .btn-primary {
+      background: var(--green);
+      color: white;
+    }
+
+    .btn-secondary {
+      background: #ece7df;
+      color: var(--text);
+    }
+
+    .chart-wrap {
+      margin-top: 24px;
+      background: #faf8f5;
+      border-radius: 16px;
+      padding: 16px;
+      border: 1px solid var(--border);
+    }
+
+    .analytics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 20px;
+    }
+
+    .metric {
+      background: #faf8f5;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      padding: 16px;
+    }
+
+    .metric-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .metric-value {
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    @media (max-width: 1100px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .timeline-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 700px) {
+      .week-grid {
+        display: flex;
+        overflow-x: auto;
+        padding-bottom: 12px;
+      }
+
+      .timeline-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .analytics {
+        grid-template-columns: 1fr;
+      }
+
+      .detail-title {
+        font-size: 22px;
+      }
+
+      .topbar {
+        padding: 16px;
+      }
+
+      .layout {
+        padding: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app">
+
+  <div class="topbar">
+    <div>
+      <div class="barrel-name">{{ barrel_name }}</div>
+      <div class="last-sync">Laatste update: {{ last_updated_mins }}</div>
+    </div>
+
+    <div class="status-row">
+
+      <div class="status-card">
+        <div class="status-label">Batterij</div>
+        <div class="battery-bar" id="battery-bar"></div>
+      </div>
+
+      <div class="status-card">
+        <div class="status-label">Waterniveau</div>
+        <div class="status-value" id="top-water">-- L</div>
+      </div>
+
+      <div class="status-card">
+        <div class="status-label">Weer</div>
+        <div class="status-value" id="top-weather">⏳</div>
+      </div>
+
+      <div class="status-card">
+        <div class="status-label">Sensor</div>
+        <div class="status-value" id="sensor-status">🟢 Online</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="layout">
+
+    <div class="sidebar">
+
+      <div class="panel">
+        <div class="panel-title">Reservoirstatus</div>
+
+        <div class="tank">
+          <div class="tank-fill" id="tank-fill"></div>
+        </div>
+
+        <div class="tank-value" id="tank-value">--</div>
+        <div class="tank-sub" id="tank-max">van -- L max</div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Weersadvies</div>
+        <div id="weather-alert" class="alert good">Weerdata laden...</div>
+      </div>
+
+      <div class="panel">
+        <div class="toggle-row">
+          <div>
+            <div style="font-weight:700">Annuleer op regen</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:4px">
+              Schema's worden automatisch gepauzeerd bij regen.
+            </div>
+          </div>
+
+          <label class="switch">
+            <input type="checkbox" id="rain-toggle">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Slimme inzichten</div>
+
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div class="alert good" id="usage-tip">
+            Analyse laden...
+          </div>
+
+          <div class="alert warn" id="forecast-tip">
+            Forecast laden...
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="content">
+
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px;flex-wrap:wrap">
+          <div style="font-family:'Fraunces', serif;font-size:28px;font-weight:300">Weekoverzicht</div>
+          <div style="font-size:13px;color:var(--muted)">
+            Live data · Historiek · Schema's · Weer
+          </div>
+        </div>
+
+        <div class="week-grid" id="week-grid"></div>
+      </div>
+
+      <div class="detail-panel">
+
+        <div class="detail-head">
+          <div>
+            <div class="detail-title" id="detail-title">Vandaag</div>
+            <div style="color:var(--muted);margin-top:4px" id="detail-subtitle"></div>
+          </div>
+
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-secondary" onclick="resetDaySchedule()">Reset dag</button>
+            <button class="btn btn-primary" onclick="saveSchedule()">Schema opslaan</button>
+          </div>
+        </div>
+
+        <div class="timeline-grid" id="timeline-grid"></div>
+
+        <div class="chart-wrap">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px;flex-wrap:wrap">
+            <div>
+              <div style="font-weight:700">Historische grafiek</div>
+              <div style="font-size:13px;color:var(--muted)">Waterniveau doorheen de dag</div>
+            </div>
+          </div>
+
+          <canvas id="history-chart" height="110"></canvas>
+        </div>
+
+        <div class="analytics">
+
+          <div class="metric">
+            <div class="metric-label">Gemiddeld niveau</div>
+            <div class="metric-value" id="avg-level">--</div>
+          </div>
+
+          <div class="metric">
+            <div class="metric-label">Historische punten</div>
+            <div class="metric-value" id="history-count">--</div>
+          </div>
+
+          <div class="metric">
+            <div class="metric-label">Geplande taken</div>
+            <div class="metric-value" id="task-count">--</div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<script>
+
+const serverData = {{ data | tojson }};
+
+const MAX_L = (Math.PI * 25 * 25 * 90) / 1000;
+
+const DAYS_SHORT = ['Zo','Ma','Di','Wo','Do','Vr','Za'];
+const DAYS_LONG = ['Zondag','Maandag','Dinsdag','Woensdag','Donderdag','Vrijdag','Zaterdag'];
+
+const SLOT_TYPES = {
+  '-': 'Uit',
+  '1': 'Sip',
+  '2': 'Rustig',
+  '3': 'Zwaar',
+  'f': 'Vloed'
+};
+
+const SLOT_COLORS = {
+  '1': 'slot-1',
+  '2': 'slot-2',
+  '3': 'slot-3',
+  'f': 'slot-f'
+};
+
+const TIMESLOTS = Array.from({length: 48}, (_, i) => {
+  const h = String(Math.floor(i / 2)).padStart(2, '0');
+  const m = i % 2 === 0 ? '00' : '30';
+  return `${h}:${m}`;
+});
+
+let historyData = serverData.history || [];
+let todaySchedule = (serverData.today_schedule || '-'.repeat(48)).split('');
+let tomorrowSchedule = (serverData.tomorrow_schedule || '-'.repeat(48)).split('');
+let selectedOffset = 0;
+let chartInstance = null;
+let weatherData = {};
+
+const weekOffsets = [-3,-2,-1,0,1,2,3];
+
+function initBattery() {
+  const battery = Number(serverData.battery || 0);
+  const el = document.getElementById('battery-bar');
+
+  el.innerHTML = Array.from({length: 5}, (_, i) => `
+    <div class="battery-seg ${i < battery ? 'on' : ''}"></div>
+  `).join('');
+}
+
+function initWater() {
+  const level = Number(serverData.water_level || 0);
+  const pct = Math.min((level / MAX_L) * 100, 100);
+
+  document.getElementById('top-water').textContent = `${level.toFixed(1)} L`;
+  document.getElementById('tank-value').textContent = `${level.toFixed(1)} L`;
+  document.getElementById('tank-max').textContent = `van ${MAX_L.toFixed(0)} L max`;
+
+  setTimeout(() => {
+    document.getElementById('tank-fill').style.height = `${pct}%`;
+  }, 200);
+}
+
+function initRainToggle() {
+  document.getElementById('rain-toggle').checked = !!serverData.cancel_rainy;
+}
+
+function getWeatherIcon(code) {
+  if (code === 0) return '☀️';
+  if (code <= 3) return '⛅';
+  if (code <= 67) return '🌧️';
+  if (code >= 95) return '⛈️';
+  return '🌤️';
+}
+
+function getWeatherDesc(code) {
+  if (code === 0) return 'Zonnig';
+  if (code <= 3) return 'Bewolkt';
+  if (code <= 67) return 'Regen';
+  if (code >= 95) return 'Onweer';
+  return 'Wisselvallig';
+}
+
+function loadWeather() {
+  fetch('https://api.open-meteo.com/v1/forecast?latitude=50.9094&longitude=5.4179&daily=weathercode,temperature_2m_max,precipitation_probability_max&current_weather=true&timezone=auto&forecast_days=7')
+    .then(r => r.json())
+    .then(data => {
+
+      document.getElementById('top-weather').textContent = `${getWeatherIcon(data.current_weather.weathercode)} ${Math.round(data.current_weather.temperature)}°C`;
+
+      data.daily.time.forEach((date, index) => {
+        weatherData[date] = {
+          code: data.daily.weathercode[index],
+          temp: data.daily.temperature_2m_max[index],
+          rain: data.daily.precipitation_probability_max[index]
+        };
+      });
+
+      renderWeatherAdvice();
+      renderWeek();
+      renderDetail();
+      renderAnalytics();
+    });
+}
+
+function getDate(offset) {
+  const d = new Date();
+  d.setDate(d.getDate() + offset);
+  return d;
+}
+
+function getHistoryForDate(dateStr) {
+  return historyData.filter(point => {
+    const d = new Date(point[0] * 1000);
+    return d.toISOString().split('T')[0] === dateStr;
+  });
+}
+
+function getWaterLevelForDate(dateStr, offset) {
+
+  if (offset === 0) {
+    return Number(serverData.water_level || 0);
+  }
+
+  if (offset < 0) {
+    const entries = getHistoryForDate(dateStr);
+
+    if (!entries.length) return null;
+
+    return entries[entries.length - 1][1];
+  }
+
+  return null;
+}
+
+function renderWeek() {
+  const grid = document.getElementById('week-grid');
+  grid.innerHTML = '';
+
+  weekOffsets.forEach(offset => {
+
+    const d = getDate(offset);
+    const key = d.toISOString().split('T')[0];
+
+    const weather = weatherData[key] || { code: 0, rain: 0, temp: '--' };
+
+    const waterLevel = getWaterLevelForDate(key, offset);
+
+    const schedule = offset === 0
+      ? todaySchedule
+      : offset === 1
+      ? tomorrowSchedule
+      : null;
+
+    const activeSlots = [];
+
+    if (schedule) {
+      schedule.forEach((v, i) => {
+        if (v !== '-') {
+          activeSlots.push(`
+            <div class="slot-chip ${SLOT_COLORS[v]}">
+              ${TIMESLOTS[i]}
+            </div>
+          `);
+        }
+      });
+    }
+
+    const muted = document.getElementById('rain-toggle').checked && weather.rain > 50;
+
+    grid.innerHTML += `
+      <div class="day-card ${selectedOffset === offset ? 'active' : ''} ${muted ? 'rain-muted' : ''}" onclick="selectDay(${offset})">
+
+        <div class="day-top">
+          <div>
+            <div class="day-name">
+              ${offset === 0 ? 'Vandaag' : DAYS_SHORT[d.getDay()]}
+            </div>
+            <div class="day-date">
+              ${d.toLocaleDateString('nl-NL')}
+            </div>
+          </div>
+
+          <div class="weather-icon">
+            ${getWeatherIcon(weather.code)}
+          </div>
+        </div>
+
+        <div class="day-water">
+          <div style="font-size:11px;color:var(--muted)">
+            Waterniveau
+          </div>
+
+          <div class="day-water-val">
+            ${waterLevel !== null ? waterLevel.toFixed(1) + ' L' : '--'}
+          </div>
+
+          <div style="font-size:12px;color:var(--muted);margin-top:4px">
+            ${weather.temp}°C · ${weather.rain}% regen
+          </div>
+        </div>
+
+        <div class="schedule-strip">
+          ${activeSlots.length ? activeSlots.join('') : '<span style="font-size:12px;color:var(--muted)">Geen schema</span>'}
+        </div>
+
+        <button class="graph-btn" onclick="event.stopPropagation(); selectDay(${offset});">
+          📈 Bekijk dag
+        </button>
+
+      </div>
+    `;
+  });
+}
+
+function selectDay(offset) {
+  selectedOffset = offset;
+  renderWeek();
+  renderDetail();
+}
+
+function renderDetail() {
+
+  const d = getDate(selectedOffset);
+  const key = d.toISOString().split('T')[0];
+
+  document.getElementById('detail-title').textContent =
+    selectedOffset === 0
+      ? 'Vandaag'
+      : `${DAYS_LONG[d.getDay()]}`;
+
+  document.getElementById('detail-subtitle').textContent = d.toLocaleDateString('nl-NL');
+
+  const grid = document.getElementById('timeline-grid');
+  grid.innerHTML = '';
+
+  const editable = selectedOffset === 0 || selectedOffset === 1;
+
+  const schedule = selectedOffset === 0
+    ? todaySchedule
+    : selectedOffset === 1
+    ? tomorrowSchedule
+    : null;
+
+  if (!schedule) {
+    grid.innerHTML = `
+      <div style="color:var(--muted)">
+        Geen schema beschikbaar voor historische of toekomstige dagen.
+      </div>
+    `;
+
+    renderChart(key);
+    return;
+  }
+
+  schedule.forEach((value, idx) => {
+
+    const row = document.createElement('div');
+    row.className = 'time-row';
+
+    row.innerHTML = `
+      <div class="time-label">${TIMESLOTS[idx]}</div>
+
+      <select class="time-select" ${editable ? '' : 'disabled'} data-index="${idx}">
+        <option value="-" ${value === '-' ? 'selected' : ''}>Uit</option>
+        <option value="1" ${value === '1' ? 'selected' : ''}>Sip</option>
+        <option value="2" ${value === '2' ? 'selected' : ''}>Rustig</option>
+        <option value="3" ${value === '3' ? 'selected' : ''}>Zwaar</option>
+        <option value="f" ${value === 'f' ? 'selected' : ''}>Vloed</option>
+      </select>
+    `;
+
+    grid.appendChild(row);
+  });
+
+  renderChart(key);
+  renderAnalytics();
+}
+
 function renderChart(dateKey) {
 
   const ctx = document.getElementById('history-chart').getContext('2d');
@@ -75,4 +1012,93 @@ function saveSchedule() {
   const values = Array.from(selects).map(s => s.value);
 
   if (selectedOffset === 0) {
+    todaySchedule = values;
+  }
+
+  if (selectedOffset === 1) {
+    tomorrowSchedule = values;
+  }
+
+  fetch('/api/schedule', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      barrel_name: '{{ barrel_name }}',
+      today_schedule: todaySchedule.join(''),
+      tomorrow_schedule: tomorrowSchedule.join(''),
+      cancel_rainy: document.getElementById('rain-toggle').checked
+    })
+  })
+  .then(() => {
+    renderWeek();
+    renderDetail();
+    alert('Schema opgeslagen');
+  });
+}
+
+function renderWeatherAdvice() {
+
+  const today = new Date().toISOString().split('T')[0];
+  const weather = weatherData[today];
+
+  if (!weather) return;
+
+  const alert = document.getElementById('weather-alert');
+
+  if (weather.rain > 70) {
+    alert.className = 'alert danger';
+    alert.innerHTML = `🌧️ Hoge kans op regen (${weather.rain}%). Irrigatie wordt best beperkt.`;
+  }
+  else if (weather.rain > 40) {
+    alert.className = 'alert warn';
+    alert.innerHTML = `🌦️ Kans op regen (${weather.rain}%). Eco-stand aanbevolen.`;
+  }
+  else {
+    alert.className = 'alert good';
+    alert.innerHTML = `☀️ Goede irrigatieomstandigheden vandaag.`;
+  }
+
+  document.getElementById('usage-tip').innerHTML = `
+    💧 Huidig niveau: ${Number(serverData.water_level).toFixed(1)}L.
+  `;
+
+  document.getElementById('forecast-tip').innerHTML = `
+    🌤️ Verwachte max temperatuur: ${weather.temp}°C.
+  `;
+}
+
+function renderAnalytics() {
+
+  const levels = historyData.map(p => p[1]);
+
+  const avg = levels.length
+    ? levels.reduce((a,b) => a+b, 0) / levels.length
+    : 0;
+
+  document.getElementById('avg-level').textContent = `${avg.toFixed(1)}L`;
+  document.getElementById('history-count').textContent = historyData.length;
+
+  const sched = selectedOffset === 0
+    ? todaySchedule
+    : selectedOffset === 1
+    ? tomorrowSchedule
+    : [];
+
+  const tasks = sched.filter(v => v !== '-').length;
+
+  document.getElementById('task-count').textContent = tasks;
+}
+
+initBattery();
+initWater();
+initRainToggle();
+loadWeather();
+renderWeek();
+renderDetail();
+renderAnalytics();
+
+</script>
+</body>
 </html>
