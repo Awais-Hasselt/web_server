@@ -6,7 +6,7 @@ app = Flask(__name__)
 
 LAT = 50.9094
 LON = 5.4179
-GMT_OFFSET = 7200
+GMT_OFFSET = 3600 * 2
 
 
 def get_now_gmt2():
@@ -53,7 +53,7 @@ def dashboard(barrel_name):
     data.setdefault('battery', 0)
     data.setdefault('water_level', 0)
 
-    diff = int(time.time() - data.get('last_updated', time.time()))
+    diff = max(0, int(time.time()) - int(data.get('last_updated', int(time.time()))))
 
     if diff < 60:
         last_updated_str = f'{diff} sec.'
